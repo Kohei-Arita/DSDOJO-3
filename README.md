@@ -46,16 +46,26 @@ xag-prediction/
 
 ## 🧪 @experiments 実験サマリー
 
-| 実験ID / ブランチ | 実施日 | 試したこと | 精度への影響 (CV / LB etc.) | 根拠・スクリーンショット |
-|:------------------|:-------|:-----------|:----------------------------|:---------------------------|
-| exp0001_baseline  | 2025-10-02 | LightGBMベースライン構築 | CV: 0.246 → 0.231 (−6.1%) | `/Users/aritakohei/Library/CloudStorage/Dropbox/スクリーンショットスクリーンショット 2025-10-02 16.08.39.png` |
-| exp0001_host_baseline_002 | 2025-10-02 | Optuna調整 (num_leaves=17, lr≈0.0196) | CV mean: 0.2687 (OOF: 0.2688) | `experiments/exp0001/logs/host_baseline_002_metrics.json` |
+| 実験ID / ブランチ               | 実施日        | 試したこと                                | 精度への影響 (CV / LB etc.)                      | 根拠・スクリーンショット                                                                                    |
+| :------------------------ | :--------- | :----------------------------------- | :----------------------------------------- | :---------------------------------------------------------------------------------------------- |
+| exp0001_baseline          | 2025-10-02 | LightGBMベースライン構築                     | CV: 0.246 → 0.231 (−6.1%)                  | `/Users/aritakohei/Library/CloudStorage/Dropbox/スクリーンショットスクリーンショット 2025-10-02 16.08.39.png`     |
+| exp0001_host_baseline_002 | 2025-10-02 | Optuna調整 (num_leaves=17, lr≈0.0196)  | CV mean: 0.2687 (OOF: 0.2688)              | `experiments/exp0001/logs/host_baseline_002_metrics.json`                                       |
+| exp0002_host_baseline_002 | 2025-10-02 | アクション派生特徴量追加 + 時間正規化 + ターゲットエンコーディング | CV mean: 0.2683 (std 0.0061) / OOF: 0.2684 | `experiments/exp0002/logs/host_baseline_002_metrics.json`, `experiments/exp0002/training.ipynb` |
+| exp0003_host_baseline_002 | 2025-10-02 | プログレッシブ/ディープ指標の集約特徴 + pass→shot拡張 | CV mean: 0.2662 (std 0.0060) / OOF: 0.2663 | `experiments/exp0003/logs/host_baseline_002_metrics.json`, `experiments/exp0003/training.ipynb` |
 
 > **How to use**
 > 1. 実験ごとに1行追加し、`experiments/expXXXX` での変更内容・仮説を簡潔にまとめる。
 > 2. 精度指標は CV/OOF/LB など比較できる数値を前後で記録する。
 > 3. 再現性を高めるため、関連ノートブック・PR・スクリーンショットなどのパスを記載する（上記は記入例）。
 > 4. 追加情報が多い場合は `experiments/expXXXX/notes.md` に詳細を書き、本表からリンクする。
+
+### exp0002_host_baseline_002 追加要素
+
+- 選手の年齢を`Date`と`birth_date`から算出し、基本特徴量に追加。
+- アクションデータを試合×選手に集約し、アクション総数・平均座標・ゴール数・アクションタイプ別カウントを結合。
+- パスやシュートなど主要アクションの成功率、フィールドゾーン別アクション比率、出場時間あたりの指標を作成。
+- 攻守アクションの比率や`pass → shot`の連続発生回数を特徴量化して攻撃寄りの振る舞いを捉える。
+- `player_id` / `Squad` / `Opponent`に対してターゲットエンコーディングを実施し、CVリークを避けるためfold単位の平均で平滑化。
 
 ## 🐳 Docker クイックスタート（推奨）
 

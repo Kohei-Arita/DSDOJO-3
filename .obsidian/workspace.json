@@ -169,19 +169,19 @@
       "bases:Create new base": false
     }
   },
-  "active": "92dd5500afec7a59",
+  "active": "fc8698e68e920330",
   "lastOpenFiles": [
-    "experiments/exp0001/logs/host_baseline_002_training.log",
-    "experiments/exp0001/logs/host_baseline_002_metrics.json",
-    "experiments/exp0001/logs",
-    "AGENTS.md",
-    "experiments/exp0001/__pycache__/training.cpython-312.pyc",
-    "experiments/exp0001/__pycache__",
-    "data/action_data.csv",
-    "scripts/run_local_experiment.py",
-    "data/host_baseline_002_submissions.csv",
-    "experiments/exp0001/training.py",
-    "docker-compose.yml",
-    "Dockerfile"
+    "experiments/exp0004/training.ipynb",
+    "experiments/exp0004/submissions",
+    "experiments/exp0004/logs",
+    "experiments/exp0004/artifacts",
+    "experiments/exp0004",
+    "data/host_baseline_004_submissions.csv",
+    "experiments/exp0003/logs/host_baseline_002_training.log",
+    "experiments/exp0003/logs/host_baseline_002_metrics.json",
+    "experiments/exp0003/training.py",
+    "experiments/exp0003/training.ipynb",
+    "experiments/exp0003/submissions",
+    "AGENTS.md"
   ]
 }
