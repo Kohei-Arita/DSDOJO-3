@@ -1,32 +1,42 @@
 # 実験スナップショット（この1ファイルで実験を完全再現）
 experiment:
   id: exp0001
-  description: "Titanic baseline with title and family features"
-  date: "2025-09-07"
-  
+  description: "xAG prediction baseline with action aggregation features"
+  date: "2025-10-02"
+
 paths:
-  raw_dir: ../../data/raw
-  processed_dir: ../../data/processed
-  external_dir: ../../data/external
+  data_dir: ../../data
 
 data:
-  id: PassengerId
-  target: Survived
-  categorical: [Sex, Embarked, Title, AgeBand, FareBand]
-  numeric: [Pclass, Age, SibSp, Parch, Fare, FamilySize, IsAlone]
+  # データファイル
+  action_data: action_data.csv
+  match_train: match_train_data.csv
+  match_test: match_test_data.csv
+  sample_submission: sample_submission.csv
+
+  # ID・ターゲット
+  id: row_id
+  target: xAG
+  match_id: match_id
+  player_id: player_id
+
+  # 特徴量グループ（ノートブックで定義）
+  categorical: [competition, Venue, team_name_short, type_name, result_name, bodypart_name]
+  numeric: []  # ノートブックで動的に生成
 
 cv:
   seed: 42
   n_splits: 5
-  method: stratified_kfold
-  shuffle: true
+  method: group_kfold  # match_idでグループ化
+  group_col: match_id
+  shuffle: false  # GroupKFoldはshuffleなし
 
 lgbm:
-  task: binary
-  metric: auc
+  task: regression
+  metric: custom  # Position-Weighted RMSE
   params:
-    objective: binary
-    metric: auc
+    objective: regression
+    metric: rmse
     boosting_type: gbdt
     learning_rate: 0.01
     num_leaves: 64
@@ -41,30 +51,35 @@ lgbm:
     verbosity: -1
     device_type: cpu
   train:
-    num_boost_round: 20000
+    num_boost_round: 10000
     early_stopping_rounds: 200
     verbose_eval: 100
 
+evaluation:
+  # 重み付きRMSE設定
+  w_pos: 5.0  # xAG >= thresh の場合の重み
+  thresh: 0.1  # 重み付け閾値
+
 features:
-  use:
-    - Pclass
-    - Sex
-    - Age
-    - SibSp
-    - Parch
-    - Fare
-    - Embarked
-    - Title
-    - FamilySize
-    - IsAlone
-    - AgeBand
-    - FareBand
+  # 基本特徴量
+  basic:
+    - age  # 生年月日から計算
+    - minutes_played
+    - is_starter
+
+  # アクション集計特徴量（ノートブックで生成）
+  aggregation:
+    - action_count
+    - pass_success_rate
+    - shot_count
+    - position_features
+    - time_features
 
 wandb:
-  project: titanic-lgbm
+  project: xag-prediction
   entity: null
-  tags: [baseline, title, family]
-  
+  tags: [baseline, action-aggregation, gridsearch]
+
 kaggle:
-  competition: titanic
+  competition: xag-prediction
   message_template: "{exp_id} {git_sha}"
