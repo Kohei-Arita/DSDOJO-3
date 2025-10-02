@@ -1,0 +1,48 @@
+task: binary  # binary, multiclass, regression
+metric: auc  # auc, logloss, rmse, mae, etc.
+
+params:
+  objective: binary
+  metric: auc
+  boosting_type: gbdt
+  
+  # 学習率関連
+  learning_rate: 0.01
+  num_leaves: 64
+  max_depth: -1
+  
+  # 正則化
+  min_data_in_leaf: 20
+  min_child_weight: 0.001
+  feature_fraction: 0.8
+  bagging_fraction: 0.8
+  bagging_freq: 1
+  lambda_l1: 0.0
+  lambda_l2: 0.0
+  
+  # 決定性とパフォーマンス
+  seed: 42
+  deterministic: true
+  force_row_wise: true  # or force_col_wise: true
+  verbosity: -1
+  
+  # GPU設定（環境に応じて切り替え）
+  device_type: cpu  # cpu, cuda, gpu
+  # gpu_platform_id: 0
+  # gpu_device_id: 0
+
+train:
+  num_boost_round: 20000
+  early_stopping_rounds: 200
+  verbose_eval: 100
+  
+  # モデル保存
+  save_binary: true
+  
+# ハイパーパラメータ候補（オプティマイゼーション用）
+hyperparameter_space:
+  learning_rate: [0.005, 0.01, 0.05, 0.1]
+  num_leaves: [31, 64, 100, 128]
+  feature_fraction: [0.7, 0.8, 0.9, 1.0]
+  bagging_fraction: [0.7, 0.8, 0.9, 1.0]
+  min_data_in_leaf: [10, 20, 50, 100]

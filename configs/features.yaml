@@ -1,0 +1,79 @@
+# 使用特徴量の定義
+use:
+  - Pclass
+  - Sex
+  - Age
+  - SibSp
+  - Parch
+  - Fare
+  - Embarked
+  - Title
+  - FamilySize
+  - IsAlone
+  - AgeBand
+  - FareBand
+
+# 特徴量エンジニアリングの設定
+engineering:
+  # タイトル抽出
+  title:
+    method: regex
+    pattern: r' ([A-Za-z]+)\.'
+    mapping:
+      'Mr': 'Mr'
+      'Mrs': 'Mrs'
+      'Miss': 'Miss'
+      'Master': 'Master'
+      'Dr': 'Rare'
+      'Rev': 'Rare'
+      'Col': 'Rare'
+      'Major': 'Rare'
+      'Mlle': 'Miss'
+      'Countess': 'Rare'
+      'Ms': 'Mrs'
+      'Lady': 'Rare'
+      'Jonkheer': 'Rare'
+      'Don': 'Rare'
+      'Dona': 'Rare'
+      'Mme': 'Mrs'
+      'Capt': 'Rare'
+      'Sir': 'Rare'
+
+  # 年齢帯
+  age_band:
+    bins: [0, 12, 18, 35, 60, 100]
+    labels: ['Child', 'Teen', 'Adult', 'Middle', 'Senior']
+    
+  # 運賃帯
+  fare_band:
+    method: quantile
+    n_bins: 4
+    labels: ['Low', 'Medium', 'High', 'VeryHigh']
+
+# カテゴリ特徴量（LightGBMネイティブ処理用）
+categorical_features:
+  - Sex
+  - Embarked
+  - Title
+  - AgeBand
+  - FareBand
+
+# 数値特徴量
+numerical_features:
+  - Pclass
+  - Age
+  - SibSp
+  - Parch
+  - Fare
+  - FamilySize
+  - IsAlone
+
+# 特徴量選択
+selection:
+  methods:
+    - correlation  # 相関による除去
+    - variance_threshold  # 分散による除去
+    - mutual_info  # 相互情報量
+  
+  correlation_threshold: 0.95
+  variance_threshold: 0.01

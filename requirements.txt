@@ -1,0 +1,56 @@
+# Core ML/Data Science
+pandas>=2.0.0
+numpy>=1.24.0
+scikit-learn>=1.3.0
+lightgbm>=4.0.0
+
+# Data Processing
+pyyaml>=6.0
+pyarrow>=12.0.0  # for parquet
+fastparquet>=0.8.3
+
+# Visualization
+matplotlib>=3.7.0
+seaborn>=0.12.0
+plotly>=5.15.0
+
+# Experiment Tracking
+wandb>=0.15.0
+
+# Data Version Control
+dvc>=3.0.0
+dvc[s3]>=3.0.0  # for S3 remote storage (optional)
+
+# Kaggle API
+kaggle>=1.5.0
+
+# Jupyter/Notebook
+jupyter>=1.0.0
+jupyterlab>=4.0.0
+jupytext>=1.15.0
+ipywidgets>=8.0.0
+
+# Optimization
+optuna>=3.3.0
+hyperopt>=0.2.7
+
+# Model Interpretation
+shap>=0.42.0
+
+# Code Quality
+black>=23.0.0
+ruff>=0.0.275
+pre-commit>=3.3.0
+
+# Testing
+pytest>=7.4.0
+pytest-cov>=4.1.0
+
+# Utilities
+tqdm>=4.65.0
+python-dotenv>=1.0.0
+click>=8.1.0
+
+# Statistical Analysis
+scipy>=1.11.0
+statsmodels>=0.14.0

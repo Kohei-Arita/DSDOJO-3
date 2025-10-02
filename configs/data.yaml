@@ -1,0 +1,29 @@
+paths:
+  raw_dir: data/raw
+  processed_dir: data/processed
+  external_dir: data/external
+
+columns:
+  id: PassengerId
+  target: Survived
+  categorical: [Sex, Embarked, Title]
+  numeric: [Age, Fare, SibSp, Parch, Pclass, FamilySize]
+
+features:
+  # 基本特徴量
+  basic: [Pclass, Sex, Age, SibSp, Parch, Fare, Embarked]
+  # 派生特徴量
+  derived: [Title, FamilySize, IsAlone, AgeBand, FareBand]
+
+preprocessing:
+  fill_missing:
+    Age: median
+    Fare: median
+    Embarked: mode
+  
+  feature_engineering:
+    Title: True  # Mr, Mrs, Miss, Master, etc.
+    FamilySize: True  # SibSp + Parch + 1
+    IsAlone: True  # FamilySize == 1
+    AgeBand: True  # Age binning
+    FareBand: True  # Fare binning

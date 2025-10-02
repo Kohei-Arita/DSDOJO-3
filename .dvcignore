@@ -1,0 +1,14 @@
+# DVC ignore patterns
+*.pyc
+__pycache__/
+.DS_Store
+.vscode/
+.idea/
+*.log
+
+# 実験ディレクトリ（DVCではなくGitで管理）
+experiments/
+
+# 一時ファイル
+*.tmp
+*.temp

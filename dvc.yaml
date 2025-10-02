@@ -1,0 +1,47 @@
+stages:
+  download_data:
+    cmd: python -m scripts.download_data --competition titanic --output data/raw
+    deps:
+      - scripts/download_data.py
+    outs:
+      - data/raw/train.csv
+      - data/raw/test.csv
+      - data/raw/gender_submission.csv
+    params:
+      - configs/data.yaml:columns
+      
+  preprocess:
+    cmd: python -m scripts.preprocess --config configs/data.yaml --input data/raw --output data/processed
+    deps:
+      - data/raw/train.csv
+      - data/raw/test.csv
+      - scripts/preprocess.py
+      - configs/data.yaml
+      - configs/features.yaml
+    outs:
+      - data/processed/train_processed.parquet
+      - data/processed/test_processed.parquet
+      - data/processed/feature_info.json
+    params:
+      - configs/data.yaml:preprocessing
+      - configs/features.yaml:engineering
+
+  # 外部データ取得（オプション）
+  # external_data:
+  #   cmd: python -m scripts.fetch_external --config configs/data.yaml --output data/external
+  #   deps:
+  #     - scripts/fetch_external.py
+  #     - configs/data.yaml
+  #   outs:
+  #     - data/external/
+
+plots:
+  - data/processed/feature_info.json:
+      template: linear
+      x: feature
+      y: importance
+      title: "Feature Importance"
+
+metrics:
+  - data/processed/feature_info.json:
+      cache: false

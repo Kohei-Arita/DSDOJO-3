@@ -1,0 +1,70 @@
+# 実験スナップショット（この1ファイルで実験を完全再現）
+experiment:
+  id: exp0001
+  description: "Titanic baseline with title and family features"
+  date: "2025-09-07"
+  
+paths:
+  raw_dir: ../../data/raw
+  processed_dir: ../../data/processed
+  external_dir: ../../data/external
+
+data:
+  id: PassengerId
+  target: Survived
+  categorical: [Sex, Embarked, Title, AgeBand, FareBand]
+  numeric: [Pclass, Age, SibSp, Parch, Fare, FamilySize, IsAlone]
+
+cv:
+  seed: 42
+  n_splits: 5
+  method: stratified_kfold
+  shuffle: true
+
+lgbm:
+  task: binary
+  metric: auc
+  params:
+    objective: binary
+    metric: auc
+    boosting_type: gbdt
+    learning_rate: 0.01
+    num_leaves: 64
+    max_depth: -1
+    min_data_in_leaf: 20
+    feature_fraction: 0.8
+    bagging_fraction: 0.8
+    bagging_freq: 1
+    seed: 42
+    deterministic: true
+    force_row_wise: true
+    verbosity: -1
+    device_type: cpu
+  train:
+    num_boost_round: 20000
+    early_stopping_rounds: 200
+    verbose_eval: 100
+
+features:
+  use:
+    - Pclass
+    - Sex
+    - Age
+    - SibSp
+    - Parch
+    - Fare
+    - Embarked
+    - Title
+    - FamilySize
+    - IsAlone
+    - AgeBand
+    - FareBand
+
+wandb:
+  project: titanic-lgbm
+  entity: null
+  tags: [baseline, title, family]
+  
+kaggle:
+  competition: titanic
+  message_template: "{exp_id} {git_sha}"

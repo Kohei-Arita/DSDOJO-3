@@ -1,0 +1,11 @@
+# Jupytext configuration
+formats = "ipynb,py:percent"
+
+# Notebook metadata to sync
+notebook_metadata_filter = "all,-jupytext.text_representation.jupytext_version"
+
+# Cell metadata to sync  
+cell_metadata_filter = "all"
+
+# Execute the notebook when saving
+# execute = false

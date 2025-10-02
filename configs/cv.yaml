@@ -1,0 +1,23 @@
+seed: 42
+n_splits: 5
+method: stratified_kfold  # stratified_kfold, group_kfold, time_series_split
+group_col: null
+shuffle: true
+test_size: null  # for train_test_split
+
+# CV戦略の詳細設定
+stratified_kfold:
+  shuffle: true
+  
+group_kfold:
+  # group_col must be specified in main level
+  
+time_series_split:
+  n_splits: 5
+  test_size: null
+  gap: 0
+
+# 分割品質の監視
+validation:
+  min_samples_per_fold: 100
+  target_distribution_threshold: 0.05  # fold間のtarget分布の許容誤差
