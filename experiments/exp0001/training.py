@@ -367,7 +367,10 @@
 
 # %% id="km_jW_2YiuhU" trusted=true
 # 必要モジュールをimport
-import os
+import json
+from datetime import datetime
+from pathlib import Path
+
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -1031,6 +1034,64 @@ print("Optuna用ハイパーパラメータ設定完了")
 print(f"探索対象パラメータ: {list(optuna_search_space.keys())}")
 
 # %% colab={"base_uri": "https://localhost:8080/"} id="-hkjQJvTvhMO" outputId="61949fbb-9b97-43cd-9bfc-e704053383ba" trusted=true
+try:
+    base_dir = Path(__file__).resolve().parent
+except NameError:  # __file__ はノートブック実行時には定義されない
+    base_dir = Path.cwd()
+
+log_dir = base_dir / "logs"
+log_dir.mkdir(parents=True, exist_ok=True)
+
+
+def save_training_run(
+    cv_scores,
+    oof_score,
+    optuna_summary,
+    best_params,
+    log_directory: Path,
+    log_prefix: str = "host_baseline_002",
+):
+    """Persist CV metrics to reusable JSON/text logs."""
+
+    timestamp = datetime.now().astimezone().isoformat(timespec="seconds")
+
+    metrics_payload = {
+        "run_timestamp": timestamp,
+        "cv": {
+            "scores": [float(score) for score in cv_scores],
+            "mean": float(np.mean(cv_scores)),
+            "std": float(np.std(cv_scores)),
+        },
+        "per_fold": {f"fold_{idx + 1}": float(score) for idx, score in enumerate(cv_scores)},
+        "oof_rmse": float(oof_score),
+        "optuna": optuna_summary,
+        "best_params": {key: (float(val) if isinstance(val, (np.floating, np.integer)) else val)
+                         for key, val in best_params.items()},
+    }
+
+    metrics_path = log_directory / f"{log_prefix}_metrics.json"
+    metrics_path.write_text(json.dumps(metrics_payload, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    log_lines = [
+        f"[{timestamp}] {log_prefix}",
+        f"  CV mean: {metrics_payload['cv']['mean']:.4f}",
+        f"  CV std: {metrics_payload['cv']['std']:.4f}",
+        f"  OOF RMSE: {metrics_payload['oof_rmse']:.4f}",
+    ]
+    for idx, score in enumerate(cv_scores, start=1):
+        log_lines.append(f"  Fold {idx}: {score:.4f}")
+
+    log_lines.append(
+        "  Optuna best trial: "
+        f"{optuna_summary['best_trial_number']} (CV mean {optuna_summary['best_cv_value']:.6f}, "
+        f"fold1 RMSE {optuna_summary['fold1_val_rmse']:.6f})"
+    )
+
+    log_path = log_directory / f"{log_prefix}_training.log"
+    with log_path.open("a", encoding="utf-8") as fp:
+        fp.write("\n".join(log_lines) + "\n")
+
+
 # Optunaによるハイパーパラメータチューニング
 print("Optunaによるチューニングを開始します...")
 
@@ -1182,14 +1243,34 @@ for fold in range(5):
     })
     feature_importance = pd.concat([feature_importance, fold_importance], axis=0)
 
+cv_mean = float(np.mean(cv_scores))
+cv_std = float(np.std(cv_scores))
+
 print("=== Cross Validation Results (Optimized Parameters) ===")
-print(f"CV RMSE: {np.mean(cv_scores):.4f} (+/- {np.std(cv_scores) * 2:.4f})")
+print(f"CV RMSE: {cv_mean:.4f} (+/- {cv_std * 2:.4f})")
 for i, score in enumerate(cv_scores):
     print(f"Fold {i + 1}: {score:.4f}")
 
 # OOF予測のスコア算出
 oof_score = weighted_rmse(y_train, oof_preds)
 print(f"OOF RMSE: {oof_score:.4f}")
+
+optuna_summary = {
+    "best_trial_number": int(study.best_trial.number),
+    "best_cv_value": float(study.best_value),
+    "fold1_val_rmse": float(val_score),
+}
+
+save_training_run(
+    cv_scores=cv_scores,
+    oof_score=oof_score,
+    optuna_summary=optuna_summary,
+    best_params=best_params,
+    log_directory=log_dir,
+)
+
+print(f"メトリクスを保存しました: {log_dir / 'host_baseline_002_metrics.json'}")
+print(f"ログを追記しました: {log_dir / 'host_baseline_002_training.log'}")
 
 # %% [markdown] id="Sap_9i9DaIf3"
 # ## テストデータに対する推論

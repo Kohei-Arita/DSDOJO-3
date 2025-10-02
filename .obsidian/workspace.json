@@ -171,16 +171,17 @@
   },
   "active": "92dd5500afec7a59",
   "lastOpenFiles": [
+    "experiments/exp0001/logs/host_baseline_002_training.log",
+    "experiments/exp0001/logs/host_baseline_002_metrics.json",
+    "experiments/exp0001/logs",
+    "AGENTS.md",
+    "experiments/exp0001/__pycache__/training.cpython-312.pyc",
+    "experiments/exp0001/__pycache__",
     "data/action_data.csv",
     "scripts/run_local_experiment.py",
     "data/host_baseline_002_submissions.csv",
     "experiments/exp0001/training.py",
     "docker-compose.yml",
-    "Dockerfile",
-    "README.md.tmp.89150.1759389137044",
-    "data/sample_submission.csv",
-    "data/match_train_data.csv",
-    "data/match_test_data.csv",
-    "data/raw/MKJ Dojo 3/sample_submission.csv"
+    "Dockerfile"
   ]
 }

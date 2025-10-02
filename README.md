@@ -24,6 +24,7 @@ xag-prediction/
 │       ├── oof.parquet         # OOF予測
 │       ├── metrics.json        # CV/OOF指標
 │       ├── model/              # fold別モデル
+│       ├── logs/               # 実行ログ・CVメトリクス
 │       ├── submissions/        # 提出ファイル
 │       ├── env/requirements.lock # 固定環境
 │       └── notes.md            # 実験ノート
@@ -48,6 +49,7 @@ xag-prediction/
 | 実験ID / ブランチ | 実施日 | 試したこと | 精度への影響 (CV / LB etc.) | 根拠・スクリーンショット |
 |:------------------|:-------|:-----------|:----------------------------|:---------------------------|
 | exp0001_baseline  | 2025-10-02 | LightGBMベースライン構築 | CV: 0.246 → 0.231 (−6.1%) | `/Users/aritakohei/Library/CloudStorage/Dropbox/スクリーンショットスクリーンショット 2025-10-02 16.08.39.png` |
+| exp0001_host_baseline_002 | 2025-10-02 | Optuna調整 (num_leaves=17, lr≈0.0196) | CV mean: 0.2687 (OOF: 0.2688) | `experiments/exp0001/logs/host_baseline_002_metrics.json` |
 
 > **How to use**
 > 1. 実験ごとに1行追加し、`experiments/expXXXX` での変更内容・仮説を簡潔にまとめる。
@@ -121,6 +123,7 @@ python -m scripts.run_local_experiment \
   --output-dir experiments/exp0001/artifacts
 
 # 実行後: artifacts/ 内に metrics.json, oof_predictions.csv, feature_importance.csv, submission_exp0001.csv が生成されます
+# また `experiments/exp0001/logs/` にも最新のCV結果 (`*_metrics.json`, `*_training.log`) が記録されます
 ```
 
 ## 📊 コンペティション固有の特徴

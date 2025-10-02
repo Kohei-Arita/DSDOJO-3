@@ -153,3 +153,7 @@ experiments/*/submissions/*.csv
 experiments/*/model/*.lgb
 experiments/*/oof.parquet
 experiments/*/cv_folds.parquet
+
+# Local datasets (avoid pushing large files)
+data/*
+!data/.gitkeep
