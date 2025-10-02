@@ -171,6 +171,10 @@
   },
   "active": "fc8698e68e920330",
   "lastOpenFiles": [
+    "data/host_baseline_005_submissions.csv",
+    "experiments/exp0004/training.py",
+    "experiments/exp0004/logs/host_baseline_002_training.log",
+    "experiments/exp0004/logs/host_baseline_002_metrics.json",
     "experiments/exp0004/training.ipynb",
     "experiments/exp0004/submissions",
     "experiments/exp0004/logs",
@@ -178,10 +182,6 @@
     "experiments/exp0004",
     "data/host_baseline_004_submissions.csv",
     "experiments/exp0003/logs/host_baseline_002_training.log",
-    "experiments/exp0003/logs/host_baseline_002_metrics.json",
-    "experiments/exp0003/training.py",
-    "experiments/exp0003/training.ipynb",
-    "experiments/exp0003/submissions",
     "AGENTS.md"
   ]
 }

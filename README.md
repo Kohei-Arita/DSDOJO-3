@@ -46,12 +46,13 @@ xag-prediction/
 
 ## 🧪 @experiments 実験サマリー
 
-| 実験ID / ブランチ               | 実施日        | 試したこと                                | 精度への影響 (CV / LB etc.)                      | 根拠・スクリーンショット                                                                                    |
-| :------------------------ | :--------- | :----------------------------------- | :----------------------------------------- | :---------------------------------------------------------------------------------------------- |
-| exp0001_baseline          | 2025-10-02 | LightGBMベースライン構築                     | CV: 0.246 → 0.231 (−6.1%)                  | `/Users/aritakohei/Library/CloudStorage/Dropbox/スクリーンショットスクリーンショット 2025-10-02 16.08.39.png`     |
-| exp0001_host_baseline_002 | 2025-10-02 | Optuna調整 (num_leaves=17, lr≈0.0196)  | CV mean: 0.2687 (OOF: 0.2688)              | `experiments/exp0001/logs/host_baseline_002_metrics.json`                                       |
-| exp0002_host_baseline_002 | 2025-10-02 | アクション派生特徴量追加 + 時間正規化 + ターゲットエンコーディング | CV mean: 0.2683 (std 0.0061) / OOF: 0.2684 | `experiments/exp0002/logs/host_baseline_002_metrics.json`, `experiments/exp0002/training.ipynb` |
-| exp0003_host_baseline_002 | 2025-10-02 | プログレッシブ/ディープ指標の集約特徴 + pass→shot拡張 | CV mean: 0.2662 (std 0.0060) / OOF: 0.2663 | `experiments/exp0003/logs/host_baseline_002_metrics.json`, `experiments/exp0003/training.ipynb` |
+| 実験ID / ブランチ               | 元ファイル                   | 実施日        | 試したこと                                | 精度への影響 (CV / LB etc.)                      | 結果     | 考察                                                     | 根拠・スクリーンショット                                                                                    |
+| :------------------------ | :-------------------------- | :--------- | :----------------------------------- | :----------------------------------------- | :----- | :----------------------------------------------------- | :---------------------------------------------------------------------------------------------- |
+| exp0001_baseline          | -                            | 2025-10-02 | LightGBMベースライン構築                     | CV: 0.246 → 0.231 (−6.1%)                  | ✅ 改善  | Optuna調整により過学習が抑制され汎化性能が向上                           | `/Users/aritakohei/Library/CloudStorage/Dropbox/スクリーンショットスクリーンショット 2025-10-02 16.08.39.png`     |
+| exp0001_host_baseline_002 | exp0001_baseline             | 2025-10-02 | Optuna調整 (num_leaves=17, lr≈0.0196)  | CV mean: 0.2687 (OOF: 0.2688)              | -      | 比較基準となるベースライン。基本特徴量のみでの性能                            | `experiments/exp0001/logs/host_baseline_002_metrics.json`                                       |
+| exp0002_host_baseline_002 | exp0001_host_baseline_002    | 2025-10-02 | アクション派生特徴量追加 + 時間正規化 + ターゲットエンコーディング | CV mean: 0.2683 (std 0.0061) / OOF: 0.2684 | ✅ 改善  | 選手の行動パターンと時間要素の正規化が予測精度に寄与。わずかな改善(−0.0004)         | `experiments/exp0002/logs/host_baseline_002_metrics.json`, `experiments/exp0002/training.ipynb` |
+| exp0003_host_baseline_002 | exp0002_host_baseline_002    | 2025-10-02 | プログレッシブ/ディープ指標の集約特徴 + pass→shot拡張 | CV mean: 0.2662 (std 0.0060) / OOF: 0.2663 | ✅ 改善  | 攻撃的プレー連鎖の特徴量化が効果的。累積で−0.0025の改善                    | `experiments/exp0003/logs/host_baseline_002_metrics.json`, `experiments/exp0003/training.ipynb` |
+| exp0004_two_stage_hurdle  | exp0003_host_baseline_002    | 2025-10-02 | xAG>0分類→回帰の2段階LightGBM + 既存特徴群 | CV mean: 0.2889 (std 0.0059) / OOF: 0.2890 | ❌ 悪化  | 分類確率の縮小効果で高xAG試合を過小評価。キャリブレーション不足により+0.0227悪化 | `experiments/exp0004/logs/host_baseline_002_metrics.json`, `experiments/exp0004/training.ipynb` |
 
 > **How to use**
 > 1. 実験ごとに1行追加し、`experiments/expXXXX` での変更内容・仮説を簡潔にまとめる。
@@ -66,6 +67,12 @@ xag-prediction/
 - パスやシュートなど主要アクションの成功率、フィールドゾーン別アクション比率、出場時間あたりの指標を作成。
 - 攻守アクションの比率や`pass → shot`の連続発生回数を特徴量化して攻撃寄りの振る舞いを捉える。
 - `player_id` / `Squad` / `Opponent`に対してターゲットエンコーディングを実施し、CVリークを避けるためfold単位の平均で平滑化。
+
+### exp0004_two_stage_hurdle 所感
+
+- xAG>0の発生率は約31%で、分類ステージの確率が0.2〜0.3程度に収束するケースが多く、回帰出力との積によって高xAG試合を過度に縮小する挙動が発生した。
+- 2段階化により軽微な外れ値は抑制できた一方、単段LightGBM（exp0003）と比較してCV meanが約+0.023悪化し、ゼロインフレ対策としては現状のままでは有効性が確認できなかった。
+- 改善余地としては、分類確率のキャリブレーション（Platt/Isotonic）やゼロ除外時のリサンプル、回帰ステージでのメトリクス最適化（Quantile目標やタスク専用メトリック）を併用するアブレーションが必要。
 
 ## 🐳 Docker クイックスタート（推奨）
 
