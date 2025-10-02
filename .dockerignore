@@ -1,0 +1,55 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+*.egg-info/
+.pytest_cache/
+.coverage
+
+# Jupyter
+.ipynb_checkpoints
+*.ipynb_checkpoints
+
+# Experiments (モデル・予測結果は除外)
+experiments/*/model/
+experiments/*/submissions/
+experiments/*/oof.parquet
+experiments/*/*.log
+
+# Data (大容量ファイルは除外)
+data/*.csv
+data/*.parquet
+*.dvc
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Documentation
+docs/_build/
+*.md
+
+# DVC
+.dvc/cache/
+.dvc/tmp/
+
+# Logs
+*.log
+logs/
+
+# Temporary
+tmp/
+temp/
+*.tmp

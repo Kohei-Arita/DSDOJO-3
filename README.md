@@ -43,47 +43,84 @@ xag-prediction/
 └── README.md           # このファイル
 ```
 
-## 🚀 Google Colab クイックスタート
+## 🧪 @experiments 実験サマリー
 
-### 1. 環境準備
+| 実験ID / ブランチ | 実施日 | 試したこと | 精度への影響 (CV / LB etc.) | 根拠・スクリーンショット |
+|:------------------|:-------|:-----------|:----------------------------|:---------------------------|
+| exp0001_baseline  | 2025-10-02 | LightGBMベースライン構築 | CV: 0.246 → 0.231 (−6.1%) | `/Users/aritakohei/Library/CloudStorage/Dropbox/スクリーンショットスクリーンショット 2025-10-02 16.08.39.png` |
 
-```python
-# 1) GPU ランタイムを選択
-# 2) リポジトリクローン
-!git clone https://github.com/YOUR_USERNAME/DSDOJO-3.git
-%cd DSDOJO-3/experiments/exp0001
+> **How to use**
+> 1. 実験ごとに1行追加し、`experiments/expXXXX` での変更内容・仮説を簡潔にまとめる。
+> 2. 精度指標は CV/OOF/LB など比較できる数値を前後で記録する。
+> 3. 再現性を高めるため、関連ノートブック・PR・スクリーンショットなどのパスを記載する（上記は記入例）。
+> 4. 追加情報が多い場合は `experiments/expXXXX/notes.md` に詳細を書き、本表からリンクする。
 
-# 3) 依存関係インストール
-!pip install -r env/requirements.lock
+## 🐳 Docker クイックスタート（推奨）
 
-# 4) APIキー設定（Colab Secrets推奨）
-import os
-from google.colab import userdata
-os.environ[\"WANDB_API_KEY\"] = userdata.get('WANDB_API_KEY')  # 任意
-os.environ[\"KAGGLE_USERNAME\"] = userdata.get('KAGGLE_USERNAME')
-os.environ[\"KAGGLE_KEY\"] = userdata.get('KAGGLE_KEY')
-```
-
-### 2. データ準備
+### 1. Docker環境のセットアップ
 
 ```bash
-# データは既に data/ ディレクトリに配置済み
-cd ../..  # プロジェクトルート
+# リポジトリクローン
+git clone https://github.com/YOUR_USERNAME/DSDOJO-3.git
+cd DSDOJO-3
 
-# データ確認
-ls -lh data/*.csv
+# Dockerイメージのビルドと起動
+docker-compose up -d
 
-# 前処理実行（必要に応じて）
-python -m scripts.preprocess --config configs/data.yaml --input data --output data
+# Jupyter Labへアクセス
+# ブラウザで http://localhost:8888 を開く
 ```
 
-### 3. 実験実行
+### 2. ノートブック実行
 
-```python
-# experiments/exp0001/ で実行
-# 1) training.ipynb: 学習・OOF・モデル保存・W&B
-# 2) evaluation.ipynb: OOF分析・CV品質チェック
-# 3) inference.ipynb: 推論・提出・台帳更新
+```
+# Jupyter Labで experiments/exp0001/training.ipynb を開いて実行
+# 全セルを順番に実行: Cell → Run All Cells
+```
+
+### 3. Docker環境の管理
+
+```bash
+# コンテナ停止
+docker-compose down
+
+# コンテナ再起動
+docker-compose restart
+
+# ログ確認
+docker-compose logs -f
+```
+
+## 💻 ローカル環境セットアップ（Docker未使用の場合）
+
+### 1. Python環境準備
+
+```bash
+# Python 3.11推奨
+python3 -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+
+# 依存関係インストール
+pip install -r requirements.txt
+```
+
+### 2. Jupyter Lab起動
+
+```bash
+jupyter lab
+
+# ブラウザで experiments/exp0001/training.ipynb を開いて実行
+```
+
+### 3. ワンコマンド実験実行（Jupyter不要）
+
+```bash
+# config.yaml と生データ (match_train/test, action_data など) が paths.data_dir に揃っている前提
+python -m scripts.run_local_experiment \
+  --config experiments/exp0001/config.yaml \
+  --output-dir experiments/exp0001/artifacts
+
+# 実行後: artifacts/ 内に metrics.json, oof_predictions.csv, feature_importance.csv, submission_exp0001.csv が生成されます
 ```
 
 ## 📊 コンペティション固有の特徴
