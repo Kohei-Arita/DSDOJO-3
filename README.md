@@ -59,6 +59,7 @@ xag-prediction/
 | exp0008_monotone_constraints_fix | exp0007_xt_features | 2025-10-03 | 単調性制約対象列の整合性と存在チェック | CV mean: 0.2649 (std 0.0063) / OOF: 0.2650 | ✅ 改善 | 既存制約の列名ズレを修正し、攻撃系特徴量への単調増加制約を適正化。exp0007から−0.0004更新でベスト継続 | `experiments/exp0008/logs/host_baseline_002_metrics.json`, `experiments/exp0008/training.ipynb` |
 | exp0009_tweedie_quantile | exp0008_monotone_constraints_fix | 2025-10-03 | Tweedie目的 + 分位LGBMブレンド (Isotonic校正含む) | CV mean: 0.2657 (std 0.0070) / OOF: 0.2657 → 分位ブレンド OOF 0.2657 → 校正後 0.2735 | ❌ 悪化 | Tweedieは右裾重視でも基礎モデル比 +0.0007。分位ブレンドは0.1近傍のバイアス補正狙いも校正で逆に悪化。Tail強調は別の損失設計が必要 | `experiments/exp0009/logs/host_baseline_002_metrics.json`, `experiments/exp0009/training.ipynb` |
 | exp0010_learned_xt | exp0009_tweedie_quantile | 2025-10-03 | 学習型xT (value iteration) + ΔxT派生集約 | CV mean: 0.2560 (std 0.0060) / OOF: 0.2561 | ✅ 大幅改善 | 固定マトリクスxTをMarkov学習値へ置き換え、成功期待値×ΔxT等を選手×試合に集約。fold1で-0.020、平均でも-0.009改善し過去最良を更新 | `experiments/exp0010/logs/host_baseline_002_metrics.json`, `experiments/exp0010/training.ipynb` |
+| exp0011_possession_progression | exp0010_learned_xt | 2025-10-03 | 学習xT + ポゼッション進行速度/直進性集約 | CV mean: 0.2530 (std 0.0064) / OOF: 0.2530 | ✅ 改善 | 学習xTに連動してポゼッション速度・Δx/秒・ファイナルサード到達ステップ等を追加。fold1で-0.0027、平均で-0.003改善と過去最良を更新 | `experiments/exp0011/logs/host_baseline_002_metrics.json`, `experiments/exp0011/training.ipynb` |
 
 > **How to use**
 > 1. 実験ごとに1行追加し、`experiments/expXXXX` での変更内容・仮説を簡潔にまとめる。
