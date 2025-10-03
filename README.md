@@ -56,6 +56,7 @@ xag-prediction/
 | exp0005_squad_opponent_te | exp0003_host_baseline_002 | 2025-10-03 | Squad×Opponent交互作用のOOFターゲットエンコーディング追加 | CV mean: 0.2659 (std 0.0061) / OOF: 0.2660 | ✅ 改善 | 対戦カード別のxAG傾向を捕捉。exp0003から−0.0003の改善でベストスコア更新  | `experiments/exp0005/logs/host_baseline_002_metrics.json`, `experiments/exp0005/training.ipynb` |
 | exp0006_monotone_constraints | exp0005_squad_opponent_te | 2025-10-03 | LightGBM単調性制約（monotone_constraints）の導入 | CV mean: 0.2657 (std 0.0061) / OOF: 0.2658 | ✅ 改善 | 14特徴量に単調増加制約を適用。exp0005から−0.0002改善で**新ベストスコア更新** (0.2657)。過学習抑制とドメイン知識の組み込みが効果的 | `experiments/exp0006/logs/host_baseline_002_metrics.json`, `experiments/exp0006/training.ipynb` |
 | exp0007_xt_features | exp0006_monotone_constraints | 2025-10-03 | xT (Expected Threat) 特徴量の追加 | CV mean: 0.2653 (std 0.0063) / OOF: 0.2654 | ✅ 改善 | ΔxT特徴が攻撃・位置指標を補完し、exp0006から−0.0004で新ベスト更新。fold2で高リフトを確認 | `experiments/exp0007/logs/host_baseline_002_metrics.json`, `experiments/exp0007/training.ipynb` |
+| exp0008_monotone_constraints_fix | exp0007_xt_features | 2025-10-03 | 単調性制約対象列の整合性と存在チェック | CV mean: 0.2649 (std 0.0063) / OOF: 0.2650 | ✅ 改善 | 既存制約の列名ズレを修正し、攻撃系特徴量への単調増加制約を適正化。exp0007から-0.0004更新でベスト継続 | `experiments/exp0008/logs/host_baseline_002_metrics.json`, `experiments/exp0008/training.ipynb` |
 
 > **How to use**
 > 1. 実験ごとに1行追加し、`experiments/expXXXX` での変更内容・仮説を簡潔にまとめる。
