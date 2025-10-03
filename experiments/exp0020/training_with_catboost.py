@@ -351,7 +351,7 @@
 #
 # ベースラインコード（host_baseline_001.ipynb）について、特徴量の追加作成やパラメータ最適化を行った改善版コードです。
 
-# %% id="4N4IPuA_J7sw" trusted=true
+# %% id="4N4IPuA_J7sw" trusted=false
 #第一回はこちら
 #https://www.kaggle.com/competitions/dsdojo_1/overview
 
@@ -361,12 +361,12 @@
 #
 #
 
-# %% colab={"base_uri": "https://localhost:8080/"} id="GZJyn-MciuhU" outputId="eb7079dd-b265-4b57-fda9-ff61cec466b9" trusted=true
+# %% colab={"base_uri": "https://localhost:8080/"} id="GZJyn-MciuhU" outputId="eb7079dd-b265-4b57-fda9-ff61cec466b9" trusted=false
 # 必要モジュールでColab環境にないものはinstall
 # !pip install japanize_matplotlib
 # !pip install catboost
 
-# %% id="km_jW_2YiuhU" trusted=true
+# %% id="km_jW_2YiuhU" trusted=false
 # 必要モジュールをimport
 import json
 from datetime import datetime
@@ -391,7 +391,7 @@ SEED = 42
 np.random.seed(SEED)
 
 
-# %% id="ah17yN7bu-Mu" trusted=true
+# %% id="ah17yN7bu-Mu" trusted=false
 # コンペの評価指標に合わせた目的関数/評価関数の定義
 WEIGHTED_TARGET_THRESHOLD = 0.1
 WEIGHTED_POSITIVE_WEIGHT = 5.0
@@ -422,7 +422,7 @@ def weighted_rmse_feval(y_pred, dtrain):
     weighted_rmse_value = weighted_rmse(y_true, y_pred)
     return "weighted_rmse", weighted_rmse_value, False
 
-# %% id="v0L9gXW5iuhU" trusted=true
+# %% id="v0L9gXW5iuhU" trusted=false
 # 表示できるdfの行、列数を増やす
 pd.set_option("display.max_rows", 100)    # 最大100行まで表示
 pd.set_option("display.max_columns", 100) # 最大100列まで表示
@@ -430,7 +430,7 @@ pd.set_option("display.max_columns", 100) # 最大100列まで表示
 # %% [markdown] id="29WdPR8riuhV"
 # ## データ読み込み
 
-# %% colab={"base_uri": "https://localhost:8080/", "height": 804} id="e6eZzzhRiuhV" outputId="b494a902-ca3a-4cde-d9e9-52c00f7f2c38" trusted=true
+# %% colab={"base_uri": "https://localhost:8080/", "height": 804} id="e6eZzzhRiuhV" outputId="b494a902-ca3a-4cde-d9e9-52c00f7f2c38" trusted=false
 # ローカル実行用のパス設定
 base_path = '../../data'
 print(f"データ読み込み元パス: {base_path}")
@@ -457,7 +457,7 @@ display(actions_df.head(3))
 #
 # まず、001と同じ基本的な特徴量を作成します。
 
-# %% colab={"base_uri": "https://localhost:8080/"} id="F3d_UMBliuhV" outputId="3eec7699-ba5f-4497-855d-8c6c40c55b20" trusted=true
+# %% colab={"base_uri": "https://localhost:8080/"} id="F3d_UMBliuhV" outputId="3eec7699-ba5f-4497-855d-8c6c40c55b20" trusted=false
 # 所与のデータから簡単に計算できる年齢特徴量を追加する
 
 # 2017/18シーズン終了時点での年齢を計算
@@ -472,7 +472,7 @@ test_df['age'] = (test_df['Date'] - test_df['birth_date']).dt.days / 365.25
 print(f"\nマージ後のtrainデータ形状: {train_df.shape}")
 print(f"\nマージ後のtestデータ形状: {test_df.shape}")
 
-# %% colab={"base_uri": "https://localhost:8080/"} id="r_urDy8riuhV" outputId="ef6080ba-2f4d-42ed-aea8-35cffd58e420" trusted=true
+# %% colab={"base_uri": "https://localhost:8080/"} id="r_urDy8riuhV" outputId="ef6080ba-2f4d-42ed-aea8-35cffd58e420" trusted=false
 # アクションデータから試合×選手レベルの特徴量を作成
 
 # train/testに含まれる試合×選手の組み合わせを作成する
@@ -490,7 +490,7 @@ relevant_actions = actions_df.merge(
 )
 print(f"抽出されたアクション数: {len(relevant_actions)}件")
 
-# %% colab={"base_uri": "https://localhost:8080/", "height": 395} id="hXudsW7vjuBf" outputId="5dcd2476-bef4-4b52-a970-22614a3b7fd9" trusted=true
+# %% colab={"base_uri": "https://localhost:8080/", "height": 395} id="hXudsW7vjuBf" outputId="5dcd2476-bef4-4b52-a970-22614a3b7fd9" trusted=false
 # 位置データについては、homeとawayで基準が異なる
 # homeの場合は、x=0が自陣ゴールライン、x=105が敵陣ゴールライン、y=0が右サイドライン、y=68が左サイドラインに対応する
 # awayでは逆になるため、homeの選手とawayの選手で平均的なx,yの値を比較することができない
@@ -507,7 +507,7 @@ relevant_actions[(relevant_actions["type_name"] == "shot") & (relevant_actions["
 # %% [markdown] id="sQOHu5iUnWLA"
 # is_homeの値に関係なく、ゴールした場合end_x=105となっており、位置が標準化されている
 
-# %% colab={"base_uri": "https://localhost:8080/", "height": 162} id="5LCBi5A3joBl" outputId="935dbfa8-dd0f-44c5-e3f9-c2e8d4b26b25" trusted=true
+# %% colab={"base_uri": "https://localhost:8080/", "height": 162} id="5LCBi5A3joBl" outputId="935dbfa8-dd0f-44c5-e3f9-c2e8d4b26b25" trusted=false
 # 基本的な統計特徴量の作成
 # groupby()とagg()を組み合わせることで、列ごとに任意の集計方法を指定できる。
 match_player_stats = (
@@ -526,7 +526,7 @@ match_player_stats = (
 print(f"作成したデータ形状: {match_player_stats.shape}")
 display(match_player_stats.head(3))
 
-# %% colab={"base_uri": "https://localhost:8080/", "height": 162} id="RAZHAVEanr4A" outputId="a989b03e-8c48-472d-9aaf-03b24fac09bf" trusted=true
+# %% colab={"base_uri": "https://localhost:8080/", "height": 162} id="RAZHAVEanr4A" outputId="a989b03e-8c48-472d-9aaf-03b24fac09bf" trusted=false
 # ゴール数の集計
 # type_nameにshotが含まれて、成功したアクションはゴールになる
 is_shot  = relevant_actions['type_name'].isin(['shot', 'shot_freekick', 'shot_penalty'])
@@ -544,7 +544,7 @@ match_player_goals = (
 print(f"作成したデータ形状: {match_player_goals.shape}")
 display(match_player_goals.head(3))
 
-# %% colab={"base_uri": "https://localhost:8080/", "height": 182} id="ZHhHF5_tiuhV" outputId="dfa2bb40-8395-43e4-c7c8-afe51f28a8dd" trusted=true
+# %% colab={"base_uri": "https://localhost:8080/", "height": 182} id="ZHhHF5_tiuhV" outputId="dfa2bb40-8395-43e4-c7c8-afe51f28a8dd" trusted=false
 # アクションタイプ数の集計
 # type_name列の値ごとに数を集計する
 action_type_stats = (
@@ -560,7 +560,7 @@ action_type_stats = (
 print(f"作成したデータ形状: {action_type_stats.shape}")
 display(action_type_stats.head(3))
 
-# %% colab={"base_uri": "https://localhost:8080/"} id="oMpQ9RL1n1h8" outputId="e3a47fbf-85f2-44ee-d77c-2acb13ee8c48" trusted=true
+# %% colab={"base_uri": "https://localhost:8080/"} id="oMpQ9RL1n1h8" outputId="e3a47fbf-85f2-44ee-d77c-2acb13ee8c48" trusted=false
 # ベース特徴量をtrain/testへマージ
 train_df = (
     train_df
@@ -596,7 +596,7 @@ print(f"ベース特徴量マージ後のtestデータshape: {test_df.shape}")
 #
 # ここから、より高度な特徴量を作成していきます。各特徴量の意図と計算方法を詳しく説明します。
 
-# %% colab={"base_uri": "https://localhost:8080/", "height": 232, "referenced_widgets": ["09a43976bef243599b2e9b64cffb91b4", "d3e34a9bb0d24577acc83d7ae4b2486d", "dcffd72448ea44bf9ec8aec5b31762f6", "3a83f4956d7d41938ef54f146a5cc541", "69216dc0f0f4422e8166c4a8f8abe666", "79fcd266aa524e9b9d656b2eab1a8cd3", "09a7b0f32ef942afb2963f355e80a8bc", "dc043a4a5ed74b1c9b6cc8e027e5b2b6", "5e50717143ae4771b600c2a5f73488e2", "5b6ef11c003d4a79b3924bc396c0ff56", "78773c5f4ebc47fea4077d687ab0ea0c"]} id="maM2mFbTiuhV" outputId="6c028ca4-a3f4-41f8-b6f5-79d096d17f19" trusted=true
+# %% colab={"base_uri": "https://localhost:8080/", "height": 232, "referenced_widgets": ["09a43976bef243599b2e9b64cffb91b4", "d3e34a9bb0d24577acc83d7ae4b2486d", "dcffd72448ea44bf9ec8aec5b31762f6", "3a83f4956d7d41938ef54f146a5cc541", "69216dc0f0f4422e8166c4a8f8abe666", "79fcd266aa524e9b9d656b2eab1a8cd3", "09a7b0f32ef942afb2963f355e80a8bc", "dc043a4a5ed74b1c9b6cc8e027e5b2b6", "5e50717143ae4771b600c2a5f73488e2", "5b6ef11c003d4a79b3924bc396c0ff56", "78773c5f4ebc47fea4077d687ab0ea0c"]} id="maM2mFbTiuhV" outputId="6c028ca4-a3f4-41f8-b6f5-79d096d17f19" trusted=false
 # アクション成功率特徴量
 # アシストに繋がる可能性を評価するため、各種アクションの成功率を計算する
 
@@ -630,7 +630,7 @@ success_rates = pd.DataFrame(success_rates_list)
 print(f"作成したデータ形状: {success_rates.shape}")
 display(success_rates.head(3))
 
-# %% colab={"base_uri": "https://localhost:8080/", "height": 310} id="yjC2SnrIiuhW" outputId="ac96bf5f-28cf-4e2f-a395-3c52f5b32736" trusted=true
+# %% colab={"base_uri": "https://localhost:8080/", "height": 310} id="yjC2SnrIiuhW" outputId="ac96bf5f-28cf-4e2f-a395-3c52f5b32736" trusted=false
 # 位置ベース特徴量
 # フィールド上での活動エリアを分析し、攻撃的な選手を識別
 
@@ -700,7 +700,7 @@ for zone in ['defensive', 'midfield', 'attacking']:
 print(f"\n作成したデータ形状: {zone_actions.shape}")
 display(zone_actions.head(3))
 
-# %% colab={"base_uri": "https://localhost:8080/", "height": 219} id="W2m7WIjGiuhW" outputId="87b1e9c5-034e-4850-89e4-65e627031806" trusted=true
+# %% colab={"base_uri": "https://localhost:8080/", "height": 219} id="W2m7WIjGiuhW" outputId="87b1e9c5-034e-4850-89e4-65e627031806" trusted=false
 # 時間正規化特徴量
 # 出場時間による影響を排除し、公平な比較を可能にする
 
@@ -756,7 +756,7 @@ per_minute_features = per_minute_features[['match_id', 'player_id'] + per_minute
 print(f"\n作成したデータ形状: {per_minute_features.shape}")
 display(per_minute_features.head(3))
 
-# %% colab={"base_uri": "https://localhost:8080/", "height": 199} id="5m47SqPMiuhW" outputId="5ceb8fa8-cc5a-478a-bb4b-7be3075b35f1" trusted=true
+# %% colab={"base_uri": "https://localhost:8080/", "height": 199} id="5m47SqPMiuhW" outputId="5ceb8fa8-cc5a-478a-bb4b-7be3075b35f1" trusted=false
 # 攻撃/守備バランス特徴量
 # 選手のプレースタイルを定量化し、攻撃的な選手を識別
 
@@ -809,7 +809,7 @@ offense_defense_balance = offense_defense_balance.drop(columns=['total_actions']
 print(f"\n作成したデータ形状: {offense_defense_balance.shape}")
 display(offense_defense_balance.head(3))
 
-# %% colab={"base_uri": "https://localhost:8080/", "height": 199} id="sLKXukn5pIUx" outputId="3c3f0531-8bd0-4e66-9c7e-dacfa3a0b86a" trusted=true
+# %% colab={"base_uri": "https://localhost:8080/", "height": 199} id="sLKXukn5pIUx" outputId="3c3f0531-8bd0-4e66-9c7e-dacfa3a0b86a" trusted=false
 # 時系列要素を加味した特徴量
 # xAGの定義を考えると、パスした味方のシュートが多いほどxAGは高くなる
 # そこで、次アクションがシュートであるパスの数を選手-試合ごとに集計する
@@ -836,7 +836,7 @@ pass_leads_to_shot = (
 print(f"\n作成したデータ形状: {pass_leads_to_shot.shape}")
 display(pass_leads_to_shot.head(3))
 
-# %% trusted=true
+# %% trusted=false
 # プログレッシブ/ディープ系の特徴量
 print("プログレッシブ/ディープ系特徴量を計算中...")
 
@@ -996,7 +996,7 @@ print(f"作成したプログレッシブ系特徴量: {progressive_features.sha
 display(progressive_features.head(3))
 
 
-# %% trusted=true
+# %% trusted=false
 # 学習型 xT (Expected Threat) 特徴量
 print("学習型xT (value iteration) 特徴量を計算中...")
 
@@ -1157,7 +1157,7 @@ display(xt_learned_features.head(3))
 # Learned xT highlights forward threat, so we aggregate possession speed and directness as complementary signals.
 #
 
-# %% trusted=true
+# %% trusted=false
 print("Calculating possession progression features...")
 
 pos_actions = (
@@ -1299,7 +1299,7 @@ print("Possession progression features added:", len(possession_feature_cols))
 # Network-centric statistics to capture player roles within possession flow.
 #
 
-# %% trusted=true
+# %% trusted=false
 print("Calculating pass network features...")
 
 sorted_actions = (
@@ -1460,7 +1460,7 @@ print("Pass network features added:", len(pass_network_feature_cols))
 # 学習済みxTに基づく空間価値と行為タイプ別の成功確率モデルを組み合わせ、リスク調整された期待xT増分 (eΔxT) を算出します。
 #
 
-# %% trusted=true
+# %% trusted=false
 
 print("行為タイプ別 xPass モデルを構築しています...")
 
@@ -1742,7 +1742,7 @@ if xpass_calibration_records:
 
 
 
-# %% colab={"base_uri": "https://localhost:8080/", "height": 977} id="nzaeWhMpbDlr" outputId="f99d35a4-fc96-4bcc-f176-50c7235075ef" trusted=true
+# %% colab={"base_uri": "https://localhost:8080/", "height": 977} id="nzaeWhMpbDlr" outputId="f99d35a4-fc96-4bcc-f176-50c7235075ef" trusted=false
 # 5分割のGroupKFoldを設定（match_idでグループ化）
 gkf = GroupKFold(n_splits=5)
 train_df["fold"] = 0  # 0で初期化
@@ -1804,7 +1804,7 @@ for i in range(5):
 plt.tight_layout()
 plt.show()
 
-# %% trusted=true
+# %% trusted=false
 
 print("eΔxTのλ最適化と特徴量集約を実行中...")
 
@@ -2088,7 +2088,7 @@ else:
 
 
 
-# %% trusted=true
+# %% trusted=false
 
 print("チーム文脈特徴量を追加しています...")
 
@@ -2121,7 +2121,7 @@ else:
     team_context_feature_cols = []
 
 
-# %% trusted=true
+# %% trusted=false
 
 print("リーグ別ゲーティング特徴を作成しています...")
 
@@ -2166,7 +2166,7 @@ else:
 #
 # 作成した全ての特徴量を統合し、train/testデータにマージします。
 
-# %% colab={"base_uri": "https://localhost:8080/"} id="oiPaa-Dz6Gvj" outputId="cc523b94-b8ff-47fd-b87c-8ced83eb52a0" trusted=true
+# %% colab={"base_uri": "https://localhost:8080/"} id="oiPaa-Dz6Gvj" outputId="cc523b94-b8ff-47fd-b87c-8ced83eb52a0" trusted=false
 # 応用特徴量をtrain/testへマージ
 train_df = (
     train_df
@@ -2218,7 +2218,7 @@ print(f"マージ後のtestデータshape: {test_df.shape}")
 # %% [markdown] id="EqDZiepKaIf3"
 # ## モデル学習用データ準備
 
-# %% trusted=true
+# %% trusted=false
 
 # ターゲットエンコーディング特徴量の作成
 print("ターゲットエンコーディング特徴量を作成中...")
@@ -2297,7 +2297,7 @@ print("  Squad_comp_residual などの新特徴を追加しました。")
 
 
 
-# %% colab={"base_uri": "https://localhost:8080/"} id="507qeMbXaIf3" outputId="bc0b39f4-fe13-4491-8f88-71c960669942" trusted=true
+# %% colab={"base_uri": "https://localhost:8080/"} id="507qeMbXaIf3" outputId="bc0b39f4-fe13-4491-8f88-71c960669942" trusted=false
 
 # 各特徴量グループの定義
 base_features = ["age", "action_count", "avg_x", "avg_y", "minutes_played", "goal_count"]
@@ -2371,7 +2371,7 @@ print(f"  - チーム文脈系: {len(team_context_features)}個")
 print(f"  - リーグ相互作用系: {len(comp_interaction_features)}個")
 
 
-# %% colab={"base_uri": "https://localhost:8080/"} id="sUaVQAMtR2wk" outputId="a5af6982-d1c3-4d7d-f5aa-a51963962df1" trusted=true
+# %% colab={"base_uri": "https://localhost:8080/"} id="sUaVQAMtR2wk" outputId="a5af6982-d1c3-4d7d-f5aa-a51963962df1" trusted=false
 # モデル学習用データの作成
 X_train = train_df[all_features + ["fold"]]
 y_train = train_df["xAG"]
@@ -2393,7 +2393,7 @@ print(f"\nモデル学習用データ形状: X_train {X_train.shape}, y_train {y
 # （参考: https://zenn.dev/robes/articles/d53ff6d665650f ）
 
 
-# %% colab={"base_uri": "https://localhost:8080/"} id="ngpAJwwnaIf3" outputId="321e83a6-aee6-4b0a-88c6-199be978c2c2" trusted=true
+# %% colab={"base_uri": "https://localhost:8080/"} id="ngpAJwwnaIf3" outputId="321e83a6-aee6-4b0a-88c6-199be978c2c2" trusted=false
 import optuna
 from optuna.samplers import TPESampler
 
@@ -2419,7 +2419,7 @@ optuna_search_space = {
 print("Optuna用ハイパーパラメータ設定完了")
 print(f"探索対象パラメータ: {list(optuna_search_space.keys())}")
 
-# %% colab={"base_uri": "https://localhost:8080/"} id="-hkjQJvTvhMO" outputId="61949fbb-9b97-43cd-9bfc-e704053383ba" trusted=true
+# %% colab={"base_uri": "https://localhost:8080/"} id="-hkjQJvTvhMO" outputId="61949fbb-9b97-43cd-9bfc-e704053383ba" trusted=false
 try:
     base_dir = Path(__file__).resolve().parent
 except NameError:  # __file__ はノートブック実行時には定義されない
@@ -2561,7 +2561,7 @@ print("最適化されたパラメータ:")
 for param, value in best_params.items():
     print(f"  {param}: {value}")
 
-# %% colab={"base_uri": "https://localhost:8080/"} id="f1o2kC3wsi0n" outputId="2e156a42-4637-433a-f6db-76205a1e3b21" trusted=true
+# %% colab={"base_uri": "https://localhost:8080/"} id="f1o2kC3wsi0n" outputId="2e156a42-4637-433a-f6db-76205a1e3b21" trusted=false
 # 最適化されたパラメータでの5-Fold Cross Validation
 print("最適化されたパラメータでの5-Fold Cross Validationを開始...")
 
@@ -2731,7 +2731,7 @@ print(f"ログを追記しました: {log_dir / 'host_baseline_002_training.log'
 # - 単調性制約は必要最小限に抑制
 # - 重み付きRMSEに対応したサンプル重みを使用
 
-# %% trusted=true
+# %% trusted=false
 # CatBoost用のカテゴリカル特徴量を明示的に定義
 catboost_categorical_features = ['Comp', 'Squad', 'Venue']
 
@@ -2745,7 +2745,7 @@ print(f"カテゴリカル特徴量: {catboost_categorical_features}")
 cat_features_idx = [catboost_features.index(col) for col in catboost_categorical_features if col in catboost_features]
 print(f"カテゴリカル特徴量インデックス: {cat_features_idx}")
 
-# %% trusted=true
+# %% trusted=false
 # CatBoost用のOptunaハイパーパラメータ最適化
 print("CatBoost ハイパーパラメータ最適化を開始...")
 
@@ -2829,7 +2829,7 @@ print(f"Best trial: {catboost_study.best_trial.number}")
 print(f"Best validation RMSE: {catboost_study.best_value:.4f}")
 print(f"Best parameters: {catboost_best_params}")
 
-# %% trusted=true
+# %% trusted=false
 # CatBoost用の単調性制約設定
 # LGBMよりも制約を緩めて、モデルの多様性を確保
 print("CatBoost単調性制約を設定中...")
@@ -2862,7 +2862,7 @@ print("  (LGBMの{0}個から削減し、モデルの多様性を確保)".format
 for feat in applied_catboost_monotone_features:
     print(f"  - {feat}")
 
-# %% trusted=true
+# %% trusted=false
 # CatBoostでの5-Fold Cross Validation
 print("\nCatBoostでの5-Fold Cross Validationを開始...")
 
@@ -2975,7 +2975,7 @@ print(f"差分: {catboost_oof_score - oof_score:+.4f}")
 # - グリッドサーチで最適な重みを探索
 # - LGBMとCatBoostの相補性を活用
 
-# %% trusted=true
+# %% trusted=false
 # OOF予測を使ってブレンディング比率を最適化
 print("ブレンディング比率を最適化中...")
 
@@ -3011,7 +3011,7 @@ print(f"CatBoostからの改善: {best_blend_score - catboost_oof_score:+.4f}")
 # %% [markdown]
 # ## テストデータに対する推論（ブレンドモデル）
 
-# %% trusted=true
+# %% trusted=false
 # CatBoostでテストデータに対する推論
 print("CatBoostでテストデータに対する推論を実行中...")
 
@@ -3028,7 +3028,7 @@ print(f"  Std: {catboost_test_preds.std():.4f}")
 print(f"  Min: {catboost_test_preds.min():.4f}")
 print(f"  Max: {catboost_test_preds.max():.4f}")
 
-# %% trusted=true
+# %% trusted=false
 # LightGBMでテストデータに対する推論（既存のmodelsを使用）
 print("LightGBMでテストデータに対する推論を実行中...")
 
@@ -3045,7 +3045,7 @@ print(f"  Std: {lgbm_test_preds.std():.4f}")
 print(f"  Min: {lgbm_test_preds.min():.4f}")
 print(f"  Max: {lgbm_test_preds.max():.4f}")
 
-# %% trusted=true
+# %% trusted=false
 # 最適な重みでブレンド予測を作成
 print("\nブレンド予測を作成中...")
 
@@ -3092,7 +3092,7 @@ print(f"(相関が低いほど、ブレンディングによる改善効果が�
 # %% [markdown] id="Sap_9i9DaIf3"
 # ## テストデータに対する推論
 
-# %% colab={"base_uri": "https://localhost:8080/"} id="3Xs1lGqfaIf4" outputId="47eceb84-34b8-480a-dfd5-85eebb203bc7" trusted=true
+# %% colab={"base_uri": "https://localhost:8080/"} id="3Xs1lGqfaIf4" outputId="47eceb84-34b8-480a-dfd5-85eebb203bc7" trusted=false
 # アンサンブル予測（5モデルの平均） on Test Data
 test_preds = np.zeros(len(X_test))
 
@@ -3112,7 +3112,7 @@ test_df['predicted_xAG'] = test_preds
 # %% [markdown] id="yL_4w1qWaIf4"
 # ## 予測結果の分析
 
-# %% colab={"base_uri": "https://localhost:8080/", "height": 998} id="KLKnE3KajdZp" outputId="d9b9cad3-dedc-458d-aad3-e23986d7e5a3" trusted=true
+# %% colab={"base_uri": "https://localhost:8080/", "height": 998} id="KLKnE3KajdZp" outputId="d9b9cad3-dedc-458d-aad3-e23986d7e5a3" trusted=false
 # 特徴量重要度の平均計算
 feature_importance_mean = feature_importance.groupby('feature')['importance'].agg(['mean', 'std']).reset_index()
 feature_importance_mean = feature_importance_mean.sort_values('mean', ascending=False)
@@ -3128,7 +3128,7 @@ plt.show()
 print("特徴量重要度 Top 10:")
 print(feature_importance_mean.head(10))
 
-# %% colab={"base_uri": "https://localhost:8080/", "height": 607} id="kGIeBEIPaIf4" outputId="92e7fb77-a19e-45f3-c778-c010f56a2adf" trusted=true
+# %% colab={"base_uri": "https://localhost:8080/", "height": 607} id="kGIeBEIPaIf4" outputId="92e7fb77-a19e-45f3-c778-c010f56a2adf" trusted=false
 # train, test予測値の分布を可視化
 plt.figure(figsize=(8, 6))
 sns.histplot(oof_preds, stat='density', kde=True, alpha=0.2, label='OOF予測', linewidth=0)
@@ -3153,7 +3153,7 @@ plt.show()
 # %% [markdown] id="u4I2O1ntaIf4"
 # ## 提出ファイル作成
 
-# %% id="cbhq5ARAaIf4" trusted=true
+# %% id="cbhq5ARAaIf4" trusted=false
 # ブレンドモデルの予測で提出ファイルを作成
 submission_df['xAG'] = blended_test_preds
 
@@ -3189,4 +3189,4 @@ print(f"  1. submission_blend_lgbm_catboost.csv (推奨)")
 print(f"  2. submission_lgbm_only.csv")
 print(f"  3. submission_catboost_only.csv")
 
-# %% id="NuMygIW4xHs1" trusted=true
+# %% id="NuMygIW4xHs1" trusted=false
