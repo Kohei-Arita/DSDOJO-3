@@ -53,6 +53,7 @@ xag-prediction/
 | exp0002_host_baseline_002 | exp0001_host_baseline_002    | 2025-10-02 | アクション派生特徴量追加 + 時間正規化 + ターゲットエンコーディング | CV mean: 0.2683 (std 0.0061) / OOF: 0.2684 | ✅ 改善  | 選手の行動パターンと時間要素の正規化が予測精度に寄与。わずかな改善(−0.0004)         | `experiments/exp0002/logs/host_baseline_002_metrics.json`, `experiments/exp0002/training.ipynb` |
 | exp0003_host_baseline_002 | exp0002_host_baseline_002    | 2025-10-02 | プログレッシブ/ディープ指標の集約特徴 + pass→shot拡張 | CV mean: 0.2662 (std 0.0060) / OOF: 0.2663 | ✅ 改善  | 攻撃的プレー連鎖の特徴量化が効果的。累積で−0.0025の改善                    | `experiments/exp0003/logs/host_baseline_002_metrics.json`, `experiments/exp0003/training.ipynb` |
 | exp0004_two_stage_hurdle  | exp0003_host_baseline_002    | 2025-10-02 | xAG>0分類→回帰の2段階LightGBM + 既存特徴群 | CV mean: 0.2889 (std 0.0059) / OOF: 0.2890 | ❌ 悪化  | 分類確率の縮小効果で高xAG試合を過小評価。キャリブレーション不足により+0.0227悪化 | `experiments/exp0004/logs/host_baseline_002_metrics.json`, `experiments/exp0004/training.ipynb` |
+| exp0005_squad_opponent_te | exp0003_host_baseline_002    | 2025-10-03 | Squad×Opponent交互作用のOOFターゲットエンコーディング追加 | CV mean: 0.2659 (std 0.0061) / OOF: 0.2660 | ✅ 改善  | 対戦カード別のxAG傾向を捕捉。exp0003から−0.0003の改善でベストスコア更新 | `experiments/exp0005/logs/host_baseline_002_metrics.json`, `experiments/exp0005/training.ipynb` |
 
 > **How to use**
 > 1. 実験ごとに1行追加し、`experiments/expXXXX` での変更内容・仮説を簡潔にまとめる。
@@ -73,6 +74,14 @@ xag-prediction/
 - xAG>0の発生率は約31%で、分類ステージの確率が0.2〜0.3程度に収束するケースが多く、回帰出力との積によって高xAG試合を過度に縮小する挙動が発生した。
 - 2段階化により軽微な外れ値は抑制できた一方、単段LightGBM（exp0003）と比較してCV meanが約+0.023悪化し、ゼロインフレ対策としては現状のままでは有効性が確認できなかった。
 - 改善余地としては、分類確率のキャリブレーション（Platt/Isotonic）やゼロ除外時のリサンプル、回帰ステージでのメトリクス最適化（Quantile目標やタスク専用メトリック）を併用するアブレーションが必要。
+
+### exp0005_squad_opponent_te 追加要素
+
+- **Squad×Opponent交互作用特徴**：`Squad_x_Opponent = Squad + "_vs_" + Opponent` の形式で対戦カード情報を作成
+- **OOFターゲットエンコーディング**：既存のplayer_id/Squad/Opponentに加え、Squad_x_Opponentも追加（計4種類）
+- **スムージング**：α=10.0でベイズ的平滑化を実施し、少数サンプルの過学習を抑制
+- **漏洩防止**：GroupKFold(match_id)で分割したfold外データでTEを算出し、fold内に適用
+- exp0003（CV: 0.2662）から**−0.0003改善**でベストスコアを更新。対戦カード特有のxAG傾向（攻撃的vs守備的、強豪vs下位など）を効果的に捕捉した。
 
 ## 🐳 Docker クイックスタート（推奨）
 
