@@ -55,6 +55,7 @@ xag-prediction/
 | exp0004_two_stage_hurdle  | exp0003_host_baseline_002 | 2025-10-02 | xAG>0分類→回帰の2段階LightGBM + 既存特徴群        | CV mean: 0.2889 (std 0.0059) / OOF: 0.2890 | ❌ 悪化 | 分類確率の縮小効果で高xAG試合を過小評価。キャリブレーション不足により+0.0227悪化 | `experiments/exp0004/logs/host_baseline_002_metrics.json`, `experiments/exp0004/training.ipynb` |
 | exp0005_squad_opponent_te | exp0003_host_baseline_002 | 2025-10-03 | Squad×Opponent交互作用のOOFターゲットエンコーディング追加 | CV mean: 0.2659 (std 0.0061) / OOF: 0.2660 | ✅ 改善 | 対戦カード別のxAG傾向を捕捉。exp0003から−0.0003の改善でベストスコア更新  | `experiments/exp0005/logs/host_baseline_002_metrics.json`, `experiments/exp0005/training.ipynb` |
 | exp0006_monotone_constraints | exp0005_squad_opponent_te | 2025-10-03 | LightGBM単調性制約（monotone_constraints）の導入 | CV mean: 0.2657 (std 0.0061) / OOF: 0.2658 | ✅ 改善 | 14特徴量に単調増加制約を適用。exp0005から−0.0002改善で**新ベストスコア更新** (0.2657)。過学習抑制とドメイン知識の組み込みが効果的 | `experiments/exp0006/logs/host_baseline_002_metrics.json`, `experiments/exp0006/training.ipynb` |
+| exp0007_xt_features | exp0006_monotone_constraints | 2025-10-03 | xT (Expected Threat) 特徴量の追加 | CV mean: 0.2653 (std 0.0063) / OOF: 0.2654 | ✅ 改善 | ΔxT特徴が攻撃・位置指標を補完し、exp0006から−0.0004で新ベスト更新。fold2で高リフトを確認 | `experiments/exp0007/logs/host_baseline_002_metrics.json`, `experiments/exp0007/training.ipynb` |
 
 > **How to use**
 > 1. 実験ごとに1行追加し、`experiments/expXXXX` での変更内容・仮説を簡潔にまとめる。
@@ -97,6 +98,28 @@ xag-prediction/
   - ドメイン知識（攻撃的プレー↑ → xAG↑）を直接モデルに組み込み
   - 過学習を抑制し汎化性能を向上
   - CVとLBの乖離を低減
+
+### exp0007_xt_features 追加要素
+
+- **結果サマリー**：CV mean 0.2653 (std 0.0063) / OOF 0.2654。exp0006_monotone_constraints比で−0.0004改善し、新ベスト。fold2 (0.2764) が突出する一方で他foldは0.264前後に収束し安定。
+- **xT (Expected Threat) 特徴量の導入**：サッカー分析の標準指標をxAG予測に活用。
+- **xTグリッド**：ピッチを16×12グリッドに分割し、各位置の得点脅威度を定義。
+  - ゴールに近いほど、中央に近いほど高い脅威値。
+  - Karun Singh の手法ベースの簡易実装（経験則）。
+- **ΔxT計算**：アクションの開始位置と終了位置の脅威差分を算出。
+  - 成功アクション：実際のxT増分。
+  - 失敗アクション：開始地点の価値を30%失う（ペナルティ）。
+- **Optuna最適化結果**：trial 29が最良。`num_leaves=27`, `learning_rate≈0.0148`, `min_child_samples=39`でΔxTとの相性が良好。
+- **対象アクション**：pass, cross, carry, dribble, free_kick, corner
+- **生成特徴量（10個）**：
+  - 総増分：`xt_delta_sum`, 平均増分：`xt_delta_mean`, 最大増分：`xt_delta_max`
+  - 正の増分のみ：`xt_positive_sum`, `xt_positive_mean`
+  - 成功/失敗考慮：`xt_value_sum`, `xt_value_mean`
+  - 開始位置：`xt_start_mean`, `xt_start_max`
+- **期待効果**：
+  - 結果（成功/失敗）に依存しない「脅威創出量」を捕捉
+  - 位置情報の高度活用（座標 → 脅威値への変換）
+  - プログレッシブ特徴との相乗効果（前進プレー × 脅威増加）
 
 ## 🐳 Docker クイックスタート（推奨）
 
