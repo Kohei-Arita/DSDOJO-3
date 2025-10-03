@@ -46,14 +46,15 @@ xag-prediction/
 
 ## 🧪 @experiments 実験サマリー
 
-| 実験ID / ブランチ               | 元ファイル                   | 実施日        | 試したこと                                | 精度への影響 (CV / LB etc.)                      | 結果     | 考察                                                     | 根拠・スクリーンショット                                                                                    |
-| :------------------------ | :-------------------------- | :--------- | :----------------------------------- | :----------------------------------------- | :----- | :----------------------------------------------------- | :---------------------------------------------------------------------------------------------- |
-| exp0001_baseline          | -                            | 2025-10-02 | LightGBMベースライン構築                     | CV: 0.246 → 0.231 (−6.1%)                  | ✅ 改善  | Optuna調整により過学習が抑制され汎化性能が向上                           | `/Users/aritakohei/Library/CloudStorage/Dropbox/スクリーンショットスクリーンショット 2025-10-02 16.08.39.png`     |
-| exp0001_host_baseline_002 | exp0001_baseline             | 2025-10-02 | Optuna調整 (num_leaves=17, lr≈0.0196)  | CV mean: 0.2687 (OOF: 0.2688)              | -      | 比較基準となるベースライン。基本特徴量のみでの性能                            | `experiments/exp0001/logs/host_baseline_002_metrics.json`                                       |
-| exp0002_host_baseline_002 | exp0001_host_baseline_002    | 2025-10-02 | アクション派生特徴量追加 + 時間正規化 + ターゲットエンコーディング | CV mean: 0.2683 (std 0.0061) / OOF: 0.2684 | ✅ 改善  | 選手の行動パターンと時間要素の正規化が予測精度に寄与。わずかな改善(−0.0004)         | `experiments/exp0002/logs/host_baseline_002_metrics.json`, `experiments/exp0002/training.ipynb` |
-| exp0003_host_baseline_002 | exp0002_host_baseline_002    | 2025-10-02 | プログレッシブ/ディープ指標の集約特徴 + pass→shot拡張 | CV mean: 0.2662 (std 0.0060) / OOF: 0.2663 | ✅ 改善  | 攻撃的プレー連鎖の特徴量化が効果的。累積で−0.0025の改善                    | `experiments/exp0003/logs/host_baseline_002_metrics.json`, `experiments/exp0003/training.ipynb` |
-| exp0004_two_stage_hurdle  | exp0003_host_baseline_002    | 2025-10-02 | xAG>0分類→回帰の2段階LightGBM + 既存特徴群 | CV mean: 0.2889 (std 0.0059) / OOF: 0.2890 | ❌ 悪化  | 分類確率の縮小効果で高xAG試合を過小評価。キャリブレーション不足により+0.0227悪化 | `experiments/exp0004/logs/host_baseline_002_metrics.json`, `experiments/exp0004/training.ipynb` |
-| exp0005_squad_opponent_te | exp0003_host_baseline_002    | 2025-10-03 | Squad×Opponent交互作用のOOFターゲットエンコーディング追加 | CV mean: 0.2659 (std 0.0061) / OOF: 0.2660 | ✅ 改善  | 対戦カード別のxAG傾向を捕捉。exp0003から−0.0003の改善でベストスコア更新 | `experiments/exp0005/logs/host_baseline_002_metrics.json`, `experiments/exp0005/training.ipynb` |
+| 実験ID / ブランチ               | 元ファイル                     | 実施日        | 試したこと                                 | 精度への影響 (CV / LB etc.)                      | 結果   | 考察                                            | 根拠・スクリーンショット                                                                                    |
+| :------------------------ | :------------------------ | :--------- | :------------------------------------ | :----------------------------------------- | :--- | :-------------------------------------------- | :---------------------------------------------------------------------------------------------- |
+| exp0001_baseline          | -                         | 2025-10-02 | LightGBMベースライン構築                      | CV: 0.246 → 0.231 (−6.1%)                  | ✅ 改善 | Optuna調整により過学習が抑制され汎化性能が向上                    | `/Users/aritakohei/Library/CloudStorage/Dropbox/スクリーンショットスクリーンショット 2025-10-02 16.08.39.png`     |
+| exp0001_host_baseline_002 | exp0001_baseline          | 2025-10-02 | Optuna調整 (num_leaves=17, lr≈0.0196)   | CV mean: 0.2687 (OOF: 0.2688)              | -    | 比較基準となるベースライン。基本特徴量のみでの性能                     | `experiments/exp0001/logs/host_baseline_002_metrics.json`                                       |
+| exp0002_host_baseline_002 | exp0001_host_baseline_002 | 2025-10-02 | アクション派生特徴量追加 + 時間正規化 + ターゲットエンコーディング  | CV mean: 0.2683 (std 0.0061) / OOF: 0.2684 | ✅ 改善 | 選手の行動パターンと時間要素の正規化が予測精度に寄与。わずかな改善(−0.0004)    | `experiments/exp0002/logs/host_baseline_002_metrics.json`, `experiments/exp0002/training.ipynb` |
+| exp0003_host_baseline_002 | exp0002_host_baseline_002 | 2025-10-02 | プログレッシブ/ディープ指標の集約特徴 + pass→shot拡張     | CV mean: 0.2662 (std 0.0060) / OOF: 0.2663 | ✅ 改善 | 攻撃的プレー連鎖の特徴量化が効果的。累積で−0.0025の改善               | `experiments/exp0003/logs/host_baseline_002_metrics.json`, `experiments/exp0003/training.ipynb` |
+| exp0004_two_stage_hurdle  | exp0003_host_baseline_002 | 2025-10-02 | xAG>0分類→回帰の2段階LightGBM + 既存特徴群        | CV mean: 0.2889 (std 0.0059) / OOF: 0.2890 | ❌ 悪化 | 分類確率の縮小効果で高xAG試合を過小評価。キャリブレーション不足により+0.0227悪化 | `experiments/exp0004/logs/host_baseline_002_metrics.json`, `experiments/exp0004/training.ipynb` |
+| exp0005_squad_opponent_te | exp0003_host_baseline_002 | 2025-10-03 | Squad×Opponent交互作用のOOFターゲットエンコーディング追加 | CV mean: 0.2659 (std 0.0061) / OOF: 0.2660 | ✅ 改善 | 対戦カード別のxAG傾向を捕捉。exp0003から−0.0003の改善でベストスコア更新  | `experiments/exp0005/logs/host_baseline_002_metrics.json`, `experiments/exp0005/training.ipynb` |
+| exp0006_monotone_constraints | exp0005_squad_opponent_te | 2025-10-03 | LightGBM単調性制約（monotone_constraints）の導入 | CV mean: 0.2657 (std 0.0061) / OOF: 0.2658 | ✅ 改善 | 14特徴量に単調増加制約を適用。exp0005から−0.0002改善で**新ベストスコア更新** (0.2657)。過学習抑制とドメイン知識の組み込みが効果的 | `experiments/exp0006/logs/host_baseline_002_metrics.json`, `experiments/exp0006/training.ipynb` |
 
 > **How to use**
 > 1. 実験ごとに1行追加し、`experiments/expXXXX` での変更内容・仮説を簡潔にまとめる。
@@ -82,6 +83,20 @@ xag-prediction/
 - **スムージング**：α=10.0でベイズ的平滑化を実施し、少数サンプルの過学習を抑制
 - **漏洩防止**：GroupKFold(match_id)で分割したfold外データでTEを算出し、fold内に適用
 - exp0003（CV: 0.2662）から**−0.0003改善**でベストスコアを更新。対戦カード特有のxAG傾向（攻撃的vs守備的、強豪vs下位など）を効果的に捕捉した。
+
+### exp0006_monotone_constraints 追加要素
+
+- **LightGBM単調性制約の導入**：`monotone_constraints`パラメータで特徴量とターゲットの関係性を明示的に制約
+- **対象特徴量（14個）**：
+  - プログレッシブ系：`progressive_attempt_count`, `progressive_success_count`, `progressive_distance_total/mean`
+  - ディープ系：`deep_completion_count`, `final_third_entry_count`, `penalty_area_entry_count`
+  - ゴール系：`goal_count`, `pass_to_shot_count`
+  - 攻撃ゾーン系：`zone_attacking_count`, `zone_attacking_ratio`, `attacking_ratio`
+- **制約方法**：`monotone_constraints_method = "advanced"` で高精度な制約適用
+- **期待効果**：
+  - ドメイン知識（攻撃的プレー↑ → xAG↑）を直接モデルに組み込み
+  - 過学習を抑制し汎化性能を向上
+  - CVとLBの乖離を低減
 
 ## 🐳 Docker クイックスタート（推奨）
 
