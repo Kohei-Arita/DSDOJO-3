@@ -29,6 +29,14 @@ import pandas as pd
 import yaml
 from sklearn.model_selection import GroupKFold
 
+from .advanced_features import (
+    build_nstep_chain_features,
+    build_second_assist_sca_gca,
+    build_pass_geometry_and_timing,
+    build_xpass_risk_features,
+    add_player_trend,
+    merge_blocks,
+)
 
 # ---------------------------------------------------------------------------
 # Utility dataclasses and helpers
@@ -430,6 +438,38 @@ def engineer_features(
     ad_balance = build_offense_defense_balance(relevant_actions, match_col, player_col)
     pass_leads = build_pass_leads_to_shot(relevant_actions, match_col, player_col)
 
+    # --- Advanced feature blocks ---
+    nstep_block = build_nstep_chain_features(
+        relevant_actions,
+        match_col=match_col,
+        player_col=player_col,
+        team_col="team_id",
+        type_col="type_name",
+        n_steps=3,
+        gamma=0.7,
+    )
+    second_assist, sca1, sca2, gca1, gca2 = build_second_assist_sca_gca(
+        relevant_actions,
+        match_col=match_col,
+        player_col=player_col,
+        team_col="team_id",
+        type_col="type_name",
+        result_col="result_name",
+    )
+    pass_geom, pass_latency = build_pass_geometry_and_timing(
+        relevant_actions,
+        match_col=match_col,
+        player_col=player_col,
+        type_col="type_name",
+    )
+    xpass_risk = build_xpass_risk_features(
+        relevant_actions,
+        match_col=match_col,
+        player_col=player_col,
+        type_col="type_name",
+        result_col="result_name",
+    )
+
     train_aug = merge_feature_blocks(
         train_df,
         [
@@ -441,6 +481,15 @@ def engineer_features(
             per_minute,
             ad_balance,
             pass_leads,
+            nstep_block,
+            second_assist,
+            sca1,
+            sca2,
+            gca1,
+            gca2,
+            pass_geom,
+            pass_latency,
+            xpass_risk,
         ],
         match_col,
         player_col,
@@ -457,18 +506,62 @@ def engineer_features(
             per_minute,
             ad_balance,
             pass_leads,
+            nstep_block,
+            second_assist,
+            sca1,
+            sca2,
+            gca1,
+            gca2,
+            pass_geom,
+            pass_latency,
+            xpass_risk,
         ],
         match_col,
         player_col,
     )
 
     zero_fill_cols = [col for col in train_aug.columns if col.startswith("type_")]
-    zero_fill_cols += ["action_count", "minutes_played", "goal_count", "pass_leads_to_shot"]
+    zero_fill_cols += [
+        "action_count",
+        "minutes_played",
+        "goal_count",
+        "pass_leads_to_shot",
+        "second_assist_count",
+        "SCA_1",
+        "SCA_2",
+        "GCA_1",
+        "GCA_2",
+        "nstep_to_shot",
+    ]
+    # 数値列の追加候補（存在すれば埋める）
+    zero_like_candidates = [
+        "nstep_xt_delta",
+        "pass_dist_mean",
+        "pass_dist_max",
+        "to_goal_angle_abs_mean",
+        "to_goal_dist_mean",
+        "pass_to_shot_latency_mean",
+        "pass_to_shot_latency_min",
+        "risk_creativity_sum",
+        "xpass_mean",
+        "xpass_min",
+        "pass_success_minus_xpass",
+        "xpass_deep_mean",
+        "xpass_box_mean",
+    ]
+    zero_fill_cols += [c for c in zero_like_candidates if c in train_aug.columns]
     zero_fill_cols = sorted({col for col in zero_fill_cols if col in train_aug.columns})
 
     for col in zero_fill_cols:
         train_aug[col] = train_aug[col].fillna(0)
         test_aug[col] = test_aug[col].fillna(0)
+
+    # 時系列フォーム（train/test連結のうえで安全に計算）
+    try:
+        train_aug, test_aug = add_player_trend(train_aug, test_aug, date_col="Date", group_key=player_col, target_col="xAG")
+    except Exception:
+        # DateやxAGがない場合はスキップ
+        pass
 
     return train_aug, test_aug, zero_fill_cols
 
@@ -490,6 +583,33 @@ def prepare_feature_lists(train_df: pd.DataFrame) -> Tuple[List[str], List[str]]
     ]
     sequential_features = [col for col in ("pass_leads_to_shot",) if col in train_df.columns]
 
+    advanced_candidates = [
+        "second_assist_count",
+        "SCA_1",
+        "SCA_2",
+        "GCA_1",
+        "GCA_2",
+        "nstep_to_shot",
+        "nstep_xt_delta",
+        "pass_dist_mean",
+        "pass_dist_max",
+        "to_goal_angle_abs_mean",
+        "to_goal_dist_mean",
+        "pass_to_shot_latency_mean",
+        "pass_to_shot_latency_min",
+        "risk_creativity_sum",
+        "xpass_mean",
+        "xpass_min",
+        "pass_success_minus_xpass",
+        "xpass_deep_mean",
+        "xpass_box_mean",
+        # 時系列トレンド
+        "xAG_expanding_mean",
+        "xAG_rolling3_mean",
+        "xAG_diff_prev",
+    ]
+    advanced_features = [col for col in advanced_candidates if col in train_df.columns]
+
     feature_list = (
         base_features
         + categorical_features
@@ -499,6 +619,7 @@ def prepare_feature_lists(train_df: pd.DataFrame) -> Tuple[List[str], List[str]]
         + per_minute_features
         + ad_balance_features
         + sequential_features
+        + advanced_features
     )
 
     feature_list = [col for col in feature_list if col in train_df.columns]
