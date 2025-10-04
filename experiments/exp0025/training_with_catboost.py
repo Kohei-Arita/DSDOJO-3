@@ -495,6 +495,8 @@ print(f"抽出されたアクション数: {len(relevant_actions)}件")
 # 追加（早い段階に挿入）: 高度特徴量ユーティリティの読み込み
 from pathlib import Path
 import sys
+import importlib
+
 try:
     ROOT = Path.cwd().resolve().parents[1]
     if str(ROOT) not in sys.path:
@@ -502,14 +504,24 @@ try:
 except Exception:
     pass
 
+# モジュールをリロード（修正を反映させる）
+from scripts import advanced_features
+importlib.reload(advanced_features)
+
 from scripts.advanced_features import (
     build_nstep_chain_features,
     build_second_assist_sca_gca,
     build_pass_geometry_and_timing,
     build_xpass_risk_features,
     add_player_trend,
+    # 🆕 新特徴量関数
+    build_time_based_features,
+    build_zone_based_features,
+    build_pass_network_centrality,
+    build_extended_chain_features,
+    build_dynamic_positioning_features,
 )
-print("advanced_features imported (early cell).")
+print("advanced_features imported and reloaded (early cell).")
 
 
 # %% colab={"base_uri": "https://localhost:8080/", "height": 395} id="hXudsW7vjuBf" outputId="5dcd2476-bef4-4b52-a970-22614a3b7fd9" trusted=true
@@ -588,6 +600,61 @@ xpass_risk = build_xpass_risk_features(
 
 print("Advanced feature blocks created (early).")
 
+
+# %% trusted=true
+# 🆕 新特徴量の計算 (EXP0025追加)
+print("計算中: 新特徴量 (時間帯別/ゾーン別/ネットワーク/拡張連鎖/動的ポジショニング)...")
+
+# 1. 時間帯別パフォーマンス
+time_based_features = build_time_based_features(
+    relevant_actions,
+    match_col="match_id",
+    player_col="player_id",
+    time_col="time_seconds",
+    period_col="period_id"
+)
+
+# 2. ゾーン別アクション密度
+zone_based_features = build_zone_based_features(
+    relevant_actions,
+    match_col="match_id",
+    player_col="player_id"
+)
+
+# 3. パスネットワーク中心性
+network_centrality_features = build_pass_network_centrality(
+    relevant_actions,
+    match_col="match_id",
+    player_col="player_id",
+    team_col="team_id",
+    type_col="type_name",
+    time_col="time_seconds"
+)
+
+# 4. 拡張シーケンス連鎖 (7手先)
+extended_chain_features = build_extended_chain_features(
+    relevant_actions,
+    match_col="match_id",
+    player_col="player_id",
+    team_col="team_id",
+    type_col="type_name",
+    n_steps=7,
+    gamma=0.6
+)
+
+# 5. 動的ポジショニング
+dynamic_positioning_features = build_dynamic_positioning_features(
+    relevant_actions,
+    match_col="match_id",
+    player_col="player_id"
+)
+
+print("新特徴量ブロック作成完了")
+print(f"  - 時間帯別: {len(time_based_features)}行")
+print(f"  - ゾーン別: {len(zone_based_features)}行")
+print(f"  - ネットワーク中心性: {len(network_centrality_features)}行")
+print(f"  - 拡張連鎖: {len(extended_chain_features)}行")
+print(f"  - 動的ポジショニング: {len(dynamic_positioning_features)}行")
 
 # %% colab={"base_uri": "https://localhost:8080/", "height": 162} id="RAZHAVEanr4A" outputId="a989b03e-8c48-472d-9aaf-03b24fac09bf" trusted=true
 # ゴール数の集計
@@ -693,10 +760,8 @@ success_rates = pd.DataFrame(success_rates_list)
 print(f"作成したデータ形状: {success_rates.shape}")
 display(success_rates.head(3))
 
-
 # %% trusted=true
 # 追加（ベース特徴量マージの直前）: 高度特徴量のマージ
-
 def _merge_many(df, parts):
     for part in parts:
         if part is None or (hasattr(part, "empty") and part.empty):
@@ -716,6 +781,12 @@ train_df = _merge_many(
         pass_geom,
         pass_latency,
         xpass_risk,
+        # 🆕 新特徴量
+        time_based_features,
+        zone_based_features,
+        network_centrality_features,
+        extended_chain_features,
+        dynamic_positioning_features,
     ],
 )
 
@@ -731,6 +802,12 @@ test_df = _merge_many(
         pass_geom,
         pass_latency,
         xpass_risk,
+        # 🆕 新特徴量
+        time_based_features,
+        zone_based_features,
+        network_centrality_features,
+        extended_chain_features,
+        dynamic_positioning_features,
     ],
 )
 
@@ -762,7 +839,32 @@ for col in num_cols:
         train_df[col] = train_df[col].fillna(0.0)
         test_df[col] = test_df[col].fillna(0.0)
 
+# 🆕 新特徴量の欠損値処理
+new_feature_cols = [
+    # 時間帯別
+    "first_half_actions", "second_half_actions", "final_15min_actions",
+    "early_10min_actions", "time_weighted_intensity",
+    # ゾーン別
+    "defensive_zone_actions", "middle_zone_actions", "attacking_zone_actions",
+    "halfspace_left_actions", "halfspace_right_actions", "central_corridor_actions",
+    "final_third_penetrations", "box_entries",
+    # ネットワーク中心性
+    "betweenness_centrality", "closeness_centrality", "degree_centrality",
+    "pass_receiver_diversity", "unique_pass_partners",
+    # 拡張連鎖
+    "longchain_to_shot", "longchain_xt_delta",
+    # 動的ポジショニング
+    "position_variance_x", "position_variance_y", "position_range_x",
+    "position_range_y", "avg_action_distance",
+]
+for col in new_feature_cols:
+    if col in train_df.columns:
+        train_df[col] = train_df[col].fillna(0.0)
+    if col in test_df.columns:
+        test_df[col] = test_df[col].fillna(0.0)
+
 print("Advanced features merged (early).")
+print(f"🆕 新特徴量 {len(new_feature_cols)}個を追加しました")
 
 
 # %% trusted=true
@@ -791,13 +893,24 @@ advanced_candidates = [
     "xAG_expanding_mean",
     "xAG_rolling3_mean",
     "xAG_diff_prev",
+    # 🆕 新特徴量
+    "first_half_actions", "second_half_actions", "final_15min_actions",
+    "early_10min_actions", "time_weighted_intensity",
+    "defensive_zone_actions", "middle_zone_actions", "attacking_zone_actions",
+    "halfspace_left_actions", "halfspace_right_actions", "central_corridor_actions",
+    "final_third_penetrations", "box_entries",
+    "betweenness_centrality", "closeness_centrality", "degree_centrality",
+    "pass_receiver_diversity", "unique_pass_partners",
+    "longchain_to_shot", "longchain_xt_delta",
+    "position_variance_x", "position_variance_y", "position_range_x",
+    "position_range_y", "avg_action_distance",
 ]
 advanced_features = [c for c in advanced_candidates if c in train_df.columns]
 try:
     all_features = list(dict.fromkeys(all_features + advanced_features))
 except NameError:
     _advanced_features_pending = advanced_features
-print(f"追加された高度特徴量: {len(advanced_features)}個")
+print(f"追加された高度特徴量: {len(advanced_features)}個 (🆕新特徴量含む)")
 
 
 # %% colab={"base_uri": "https://localhost:8080/", "height": 310} id="yjC2SnrIiuhW" outputId="ac96bf5f-28cf-4e2f-a395-3c52f5b32736" trusted=true
@@ -1190,47 +1303,51 @@ distribution_actions = {
 }
 shot_actions = {"shot", "shot_penalty", "shot_freekick"}
 
-# 座標欠損をゼロ埋めしてゾーン算出用に準備
-start_x = relevant_actions["start_x"].fillna(0).to_numpy()
-start_y = relevant_actions["start_y"].fillna(0).to_numpy()
-start_zones_all = map_to_zone(start_x, start_y)
+# 学習用xTはtrainのアクションのみを使用（リーク防止）
+train_match_ids_xt = set(train_df["match_id"])
+train_actions = relevant_actions[relevant_actions["match_id"].isin(train_match_ids_xt)].copy()
+
+# 座標欠損をゼロ埋めしてゾーン算出用に準備（trainのみ）
+start_x_train = train_actions["start_x"].fillna(0).to_numpy()
+start_y_train = train_actions["start_y"].fillna(0).to_numpy()
+start_zones_train = map_to_zone(start_x_train, start_y_train)
 
 transition_counts = np.zeros((NUM_ZONES, NUM_ZONES), dtype=np.float64)
 shot_counts = np.zeros(NUM_ZONES, dtype=np.float64)
 goal_counts = np.zeros(NUM_ZONES, dtype=np.float64)
 ball_loss_counts = np.zeros(NUM_ZONES, dtype=np.float64)
 
-# ショット関連統計
-shot_mask = relevant_actions["type_name"].isin(shot_actions)
-if shot_mask.any():
-    shot_zones = start_zones_all[shot_mask.to_numpy()]
-    shot_counts += np.bincount(shot_zones, minlength=NUM_ZONES)
-    goal_flags = relevant_actions.loc[shot_mask, "result_name"].eq("success").to_numpy(dtype=np.float64)
-    goal_counts += np.bincount(shot_zones, weights=goal_flags, minlength=NUM_ZONES)
+# ショット関連統計（trainのみ）
+shot_mask_train = train_actions["type_name"].isin(shot_actions)
+if shot_mask_train.any():
+    shot_zones_train = start_zones_train[shot_mask_train.to_numpy()]
+    shot_counts += np.bincount(shot_zones_train, minlength=NUM_ZONES)
+    goal_flags_train = train_actions.loc[shot_mask_train, "result_name"].eq("success").to_numpy(dtype=np.float64)
+    goal_counts += np.bincount(shot_zones_train, weights=goal_flags_train, minlength=NUM_ZONES)
 
-# パス・キャリー等のポゼッション遷移統計
-move_mask = relevant_actions["type_name"].isin(distribution_actions)
-if move_mask.any():
-    move_actions = relevant_actions.loc[move_mask].copy()
-    move_start_zones = map_to_zone(
-        move_actions["start_x"].fillna(0).to_numpy(),
-        move_actions["start_y"].fillna(0).to_numpy(),
+# パス・キャリー等のポゼッション遷移統計（trainのみ）
+move_mask_train = train_actions["type_name"].isin(distribution_actions)
+if move_mask_train.any():
+    move_actions_train = train_actions.loc[move_mask_train].copy()
+    move_start_zones_train = map_to_zone(
+        move_actions_train["start_x"].fillna(0).to_numpy(),
+        move_actions_train["start_y"].fillna(0).to_numpy(),
     )
-    move_success = move_actions["result_name"].eq("success").to_numpy()
+    move_success_train = move_actions_train["result_name"].eq("success").to_numpy()
 
-    if (~move_success).any():
-        ball_loss_counts += np.bincount(move_start_zones[~move_success], minlength=NUM_ZONES)
+    if (~move_success_train).any():
+        ball_loss_counts += np.bincount(move_start_zones_train[~move_success_train], minlength=NUM_ZONES)
 
-    valid_success_idx = move_success & move_actions["end_x"].notna().to_numpy() & move_actions["end_y"].notna().to_numpy()
-    if valid_success_idx.any():
-        success_start_zones = move_start_zones[valid_success_idx]
-        success_end_zones = map_to_zone(
-            move_actions.loc[valid_success_idx, "end_x"].to_numpy(),
-            move_actions.loc[valid_success_idx, "end_y"].to_numpy(),
+    valid_success_idx_train = move_success_train & move_actions_train["end_x"].notna().to_numpy() & move_actions_train["end_y"].notna().to_numpy()
+    if valid_success_idx_train.any():
+        success_start_zones_train = move_start_zones_train[valid_success_idx_train]
+        success_end_zones_train = map_to_zone(
+            move_actions_train.loc[valid_success_idx_train, "end_x"].to_numpy(),
+            move_actions_train.loc[valid_success_idx_train, "end_y"].to_numpy(),
         )
-        np.add.at(transition_counts, (success_start_zones, success_end_zones), 1.0)
+        np.add.at(transition_counts, (success_start_zones_train, success_end_zones_train), 1.0)
 
-# xT価値反復
+# xT価値反復（train統計で推定）
 transition_totals = transition_counts.sum(axis=1)
 total_counts = transition_totals + shot_counts + ball_loss_counts
 safe_totals = np.where(total_counts == 0, 1.0, total_counts)
@@ -1265,7 +1382,12 @@ else:
 print(f"学習型xT value iteration: {iteration + 1} step(s), max_delta={max_delta:.2e}")
 print(f"xT値の範囲: min={xt_values.min():.5f}, max={xt_values.max():.5f}")
 
-# アクションベースのxT特徴量付与
+# アクションベースのxT特徴量付与（trainで学習したxt_valuesを全行へ適用）
+# 全行（train+test）の開始ゾーンを算出
+start_x_all = relevant_actions["start_x"].fillna(0).to_numpy()
+start_y_all = relevant_actions["start_y"].fillna(0).to_numpy()
+start_zones_all = map_to_zone(start_x_all, start_y_all)
+
 end_x = relevant_actions["end_x"].to_numpy()
 end_y = relevant_actions["end_y"].to_numpy()
 has_end_coords = np.isfinite(end_x) & np.isfinite(end_y)
@@ -2612,11 +2734,22 @@ advanced_candidates = [
     "xAG_expanding_mean",
     "xAG_rolling3_mean",
     "xAG_diff_prev",
+    # 🆕 新特徴量（EXP0025）
+    "first_half_actions", "second_half_actions", "final_15min_actions",
+    "early_10min_actions", "time_weighted_intensity",
+    "defensive_zone_actions", "middle_zone_actions", "attacking_zone_actions",
+    "halfspace_left_actions", "halfspace_right_actions", "central_corridor_actions",
+    "final_third_penetrations", "box_entries",
+    "betweenness_centrality", "closeness_centrality", "degree_centrality",
+    "pass_receiver_diversity", "unique_pass_partners",
+    "longchain_to_shot", "longchain_xt_delta",
+    "position_variance_x", "position_variance_y", "position_range_x",
+    "position_range_y", "avg_action_distance",
 ]
 advanced_features = [c for c in advanced_candidates if c in train_df.columns]
 if advanced_features:
     all_features = list(dict.fromkeys(all_features + advanced_features))
-    print(f"追加された高度特徴量（学習前反映）: {len(advanced_features)}個")
+    print(f"追加された高度特徴量（学習前反映）: {len(advanced_features)}個 (🆕新特徴量25個含む)")
 
 # カテゴリカル変数については、列の型を「category」に変更しておく
 for col in categorical_features:
