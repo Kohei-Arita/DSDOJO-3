@@ -71,7 +71,18 @@ xag-prediction/
 | exp0020_catboost_blend           | exp0019_weighted_sample          | 2025-10-03 | CatBoost追加 + LightGBMブレンド比率のグリッド最適化      | CV mean: 0.2461 (std 0.0066) / OOF: 0.2462 / Optuna best 0.2447                  | ➖ 微差                                                                    | CatBoostのOrdered TSと緩い単調性制約でモデル多様性を確保しLGBMとブレンドしたが、平均スコアはexp0019と同等。重み刻みの細分化やCatBoost側の最適化余地を検討。                                                          | `experiments/exp0020/logs/host_baseline_002_metrics.json`, `experiments/exp0020/training_with_catboost.ipynb` |
 | exp0021_soft_moe                 | exp0020_catboost_blend           | 2025-10-04 | Soft MoE (Mixture of Experts) アーキテクチャ導入  | CV mean: 0.2476 (std 0.0071) / OOF: 0.2477 / Gating AUC: 0.898 / AP: 0.812       | ➖ 微悪化                                                                   | xAG threshold=0.1でLow/High expertを分離。Gating精度は高いが平均スコア+0.0015悪化。Low expertが基礎パターンのみ、High expertがチーム×戦術特徴を活用する明確な役割分担を確認。threshold最適化とexpert間バランス調整が次の改善点。 | `experiments/exp0021/logs/host_soft_moe_metrics.json`, `experiments/exp0021/training_with_catboost.ipynb`     |
 | exp0023_soft_moe_threshold_028   | exp0021_soft_moe                 | 2025-10-04 | Soft MoE threshold 0.1→0.28へ変更           | CV mean: 0.2293 (std 0.0074) / OOF: 0.2294 / Gating AUC: 0.876 / AP: 0.464       | リーダーボードの乖離が大きいため、softmoe戦略はcloseとする。exp0020に特徴量追加のアップデートを次回から開始することにする。 | threshold=0.28でLow/High expertの分離点を調整。exp0021比で-0.0183の大幅改善を達成し過去最良を更新。Gating APは低下したが、expertの専門性が明確化され予測精度が向上。                                           | `experiments/exp0023/logs/host_soft_moe_metrics.json`, `experiments/exp0023/training_with_soft_moe.ipynb`     |
-| exp0024_data_leakage_fix         | exp0020_catboost_blend           | 2025-10-04 | 特徴量の追加                                   | CV mean: 0.2309 (std 0.0057) / OOF: 0.2310 / Optuna best: 0.2303                 | ✅ 大幅改善                                                                  | Platt較正のfold外データリーケージを修正（全OOF予測+全ラベルで較正していた問題を修正）。exp0020比で-0.0152の大幅改善を達成。データリーケージ修正と再最適化によりCV/テストの乖離低減とスコア向上を両立。過去最良に近いベンチマーク。                          | `experiments/exp0024/logs/host_baseline_002_metrics.json`, `experiments/exp0024/DATA_LEAKAGE_AUDIT_REPORT.md` |
+| exp0024_data_leakage_fix         | exp0020_catboost_blend           | 2025-10-04 | 特徴量の追加                                   | CV mean: 0.2309 (std 0.0057) / OOF: 0.2310 / Optuna best: 0.2303                 | ✅ 大幅改善                                                                  | 特徴量の追加  。この時の重要度は、特徴量重要度 Top 10:
+                               feature         mean         std
+2                                GCA_1  5435.034380  314.715236
+5                                SCA_1  2412.881013  150.499600
+7                                Squad  2144.977234  334.492667
+99                       nstep_to_shot  2026.499182  199.879277
+101         openplay_edxt_positive_sum  1330.696491  160.229099
+108                      pass_edxt_max   993.121604  156.286109
+259     xt_learned_positive_delta_mean   803.519231   85.251470
+102  openplay_edxt_scaled_positive_sum   543.271319  166.256540
+41                      cross_edxt_max   420.539780  133.515785
+112               pass_edxt_scaled_max   396.010502  128.496748                        | `experiments/exp0024/logs/host_baseline_002_metrics.json`, `experiments/exp0024/DATA_LEAKAGE_AUDIT_REPORT.md` |
 | exp0025_host_baseline_002        | exp0024_data_leakage_fix         | 2025-10-04 | 特徴量の追加                                   | CV mean: 0.2307 (std 0.0058) / OOF: 0.2308 / Optuna best: 0.2297 (fold1: 0.2221) | ➖ 微差                                                                    | 詳細は `experiments/exp0025/` のレポート参照                                                                                                                        | `experiments/exp0025/logs/host_baseline_002_metrics.json`                                                     |
 
 > **How to use**
