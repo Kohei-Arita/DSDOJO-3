@@ -69,6 +69,8 @@ xag-prediction/
 | exp0018_league_gate_residual     | exp0017_team_context_gate        | 2025-10-03 | リーグゲート残差補正 + eΔxT再学習 + LOPO差分強化          | CV mean: 0.2464 (std 0.0068) / OOF: 0.2465                                  | ➖ 微差   | fold2悪化が継続し平均は+0.0002。リーグ別残差を補正しつつLOPO比率を拡張したが改善は限定的、重要度ではリーグ×xT crossが維持。                       | `experiments/exp0018/logs/host_baseline_002_metrics.json`, `experiments/exp0018/training.ipynb`               |
 | exp0019_weighted_sample          | exp0018_league_gate_residual     | 2025-10-03 | wRMSE重みをLightGBMの`sample_weight`全工程へ統一適用 | CV mean: 0.2461 (std 0.0066) / OOF: 0.2462                                  | ✅ 改善   | 指標重みと最適化を揃えfold1が0.2347まで低下。fold間ばらつきが縮み、リーグ残差補正と組み合わせた検証が安定。                                    | `experiments/exp0019/logs/host_baseline_002_metrics.json`, `experiments/exp0019/training.ipynb`               |
 | exp0020_catboost_blend           | exp0019_weighted_sample          | 2025-10-03 | CatBoost追加 + LightGBMブレンド比率のグリッド最適化      | CV mean: 0.2461 (std 0.0066) / OOF: 0.2462 / Optuna best 0.2447             | ➖ 微差   | CatBoostのOrdered TSと緩い単調性制約でモデル多様性を確保しLGBMとブレンドしたが、平均スコアはexp0019と同等。重み刻みの細分化やCatBoost側の最適化余地を検討。 | `experiments/exp0020/logs/host_baseline_002_metrics.json`, `experiments/exp0020/training_with_catboost.ipynb` |
+| exp0021_soft_moe                 | exp0020_catboost_blend           | 2025-10-04 | Soft MoE (Mixture of Experts) アーキテクチャ導入 | CV mean: 0.2476 (std 0.0071) / OOF: 0.2477 / Gating AUC: 0.898 / AP: 0.812  | ➖ 微悪化  | xAG threshold=0.1でLow/High expertを分離。Gating精度は高いが平均スコア+0.0015悪化。Low expertが基礎パターンのみ、High expertがチーム×戦術特徴を活用する明確な役割分担を確認。threshold最適化とexpert間バランス調整が次の改善点。 | `experiments/exp0021/logs/host_soft_moe_metrics.json`, `experiments/exp0021/training_with_catboost.ipynb`     |
+| exp0023_soft_moe_threshold_028   | exp0021_soft_moe                 | 2025-10-04 | Soft MoE threshold 0.1→0.28へ変更           | CV mean: 0.2293 (std 0.0074) / OOF: 0.2294 / Gating AUC: 0.876 / AP: 0.464  | ✅ 大幅改善 | threshold=0.28でLow/High expertの分離点を調整。exp0021比で-0.0183の大幅改善を達成し過去最良を更新。Gating APは低下したが、expertの専門性が明確化され予測精度が向上。 | `experiments/exp0023/logs/host_soft_moe_metrics.json`, `experiments/exp0023/training_with_soft_moe.ipynb`     |
 
 > **How to use**
 > 1. 実験ごとに1行追加し、`experiments/expXXXX` での変更内容・仮説を簡潔にまとめる。
@@ -400,6 +402,33 @@ device_type: cpu
 ### 時間によるリーク
 
 2017-18シーズンのデータなので、時系列を考慮したCV分割（例：シーズン前半で訓練、後半でバリデーション）も検討してください。
+
+## ⚠️ 開発時の注意事項
+
+### .ipynb と .py の同期
+
+**重要**: このプロジェクトでは `.ipynb` ノートブックと `.py` スクリプトの同期に細心の注意が必要です。
+
+- ノートブックで実験を行う際は、再現性のため必ず対応する `.py` ファイルも更新してください
+- `jupytext` による自動同期を推奨（`jupytext --sync`）
+- 同期忘れは実験の再現性を損なう原因となります
+
+### String型エラーの注意
+
+**カテゴリカル特徴量の処理に注意**:
+
+```python
+# ❌ 悪い例：String型のままLightGBMに渡すとエラー
+categorical_features = ['competition', 'Squad', 'Opponent']
+
+# ✅ 良い例：明示的にcategory型へ変換
+for col in categorical_features:
+    df[col] = df[col].astype('category')
+```
+
+**よくあるエラー**:
+- `ValueError: Cannot use string features with LightGBM`
+- 解決策：`categorical_feature`パラメータに列名を渡す **または** 事前に`category`型へ変換
 
 ## 🔍 トラブルシューティング
 
