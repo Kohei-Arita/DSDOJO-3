@@ -1,0 +1,134 @@
+experiment_id: exp0035
+experiment_name: "Low専門家Optuna最適化版MoE"
+base_experiment: exp0034
+creation_date: "2025-10-05"
+status: ready_to_run
+
+objective:
+  primary: "Low専門家のハイパーパラメータをOptuna最適化し、MoE全体の精度を向上させる"
+  secondary:
+    - "Low領域専用のパラメータで過学習を抑制"
+    - "High専門家最適化（exp0034）との相乗効果を実現"
+
+baseline_scores:
+  exp0031_low_expert_wrmse: "TBD"
+  exp0034_high_expert_wrmse: 0.25
+  exp0034_moe_oof: 0.22
+  exp0033_moe_oof: "TBD"
+
+target_scores:
+  low_expert_wrmse: "TBD (exp0031実行後に設定)"
+  moe_oof_wrmse: 0.21
+  expected_improvement: -0.01
+
+methodology:
+  approach: "Low専門家専用のOptuna最適化によるハイパーパラメータチューニング"
+  techniques:
+    - "Fold1のLow領域データで最適化"
+    - "50 trials でTPESampler使用"
+    - "wRMSEを目的関数として最小化"
+    - "正則化パラメータを含む7次元探索"
+
+  optimization_parameters:
+    num_leaves:
+      range: [10, 60]
+      description: "木の複雑さ"
+    learning_rate:
+      range: [0.01, 0.1]
+      scale: "log"
+      description: "学習率"
+    min_child_samples:
+      range: [20, 100]
+      description: "ノードの最小サンプル数（過学習抑制）"
+    reg_alpha:
+      range: [0.0, 1.0]
+      description: "L1正則化"
+    reg_lambda:
+      range: [0.0, 2.0]
+      description: "L2正則化"
+    feature_fraction:
+      range: [0.7, 1.0]
+      description: "特徴量サンプリング率"
+    bagging_fraction:
+      range: [0.7, 1.0]
+      description: "データサンプリング率"
+
+  implementation_steps:
+    - step: "Step 4.5 (新規)"
+      description: "Low専門家のOptuna最適化"
+      details:
+        - "Fold1のLow領域でハイパーパラメータ探索"
+        - "50 trials でTPESampler使用"
+        - "最適パラメータを low_expert_params に反映"
+
+    - step: "Step 4 (更新)"
+      description: "Low専門家の学習"
+      details:
+        - "Optuna最適化済みパラメータを使用"
+        - "全Foldで学習"
+
+    - step: "Step 5.5"
+      description: "ゼロ閾値最適化（exp0033から継承）"
+      details:
+        - "MoE予測にゼロ閾値を適用"
+
+    - step: "Step 6"
+      description: "メトリクス保存"
+      details:
+        - "Low専門家の最適パラメータを記録"
+        - "MoE OOF wRMSEを記録"
+
+expected_outcomes:
+  - "Low専門家のwRMSEが改善"
+  - "MoE全体のOOF wRMSEが0.22 → 0.21に改善"
+  - "High専門家最適化（exp0034）との相乗効果でさらなる改善"
+  - "過学習が抑制され、CV/OOFの乖離が削減"
+
+validation_points:
+  - "Optuna最適化が収束しているか（50 trialsで十分か）"
+  - "最適パラメータが妥当な範囲か"
+  - "Low専門家のOOF wRMSEがexp0031比で改善しているか"
+  - "MoE OOF wRMSEがexp0034比で改善しているか"
+  - "ゲート分離精度（AUC/AP）が維持されているか"
+
+artifacts:
+  notebook: "training_with_low_optuna.ipynb"
+  metrics: "logs/host_moe_low_optuna_001_metrics.json"
+  oof_predictions: "artifacts/oof_predictions_moe_low_optuna.csv"
+  submission: "submissions/host_moe_low_optuna_001_submission.csv"
+
+execution_time:
+  low_optuna_optimization: "15-20分（50 trials、GPU使用時）"
+  total_execution: "30-40分"
+
+next_steps:
+  - id: exp0036
+    description: "両専門家同時最適化版MoE"
+    rationale: "High/Low両専門家の最適化が完了したら、統合版で検証"
+
+  - id: future
+    description: "3専門家MoE（Low/Mid/High）"
+    rationale: "両専門家の性能向上後、階層的分離を試行"
+
+  - id: future
+    description: "温度パラメータτの再最適化"
+    rationale: "専門家性能向上後のτ探索"
+
+tags:
+  - MoE
+  - Low-Expert
+  - Optuna
+  - Hyperparameter-Optimization
+  - Regularization
+  - Zero-Threshold
+
+references:
+  - "exp0034: High専門家Optuna最適化版MoE"
+  - "exp0031: 木モデル版MoE（ベースライン）"
+  - "exp0033: ゼロ閾値最適化版MoE"
+  - "exp0027: StratifiedGKFoldでCV安定化（Optuna最適化実績）"
+
+notes:
+  - "Low領域はサンプル数が多い（約70%）ため、パラメータ最適化の効果が大きい"
+  - "正則化パラメータ（min_child_samples、reg_alpha、reg_lambda）が重要"
+  - "High専門家の最適化成功後に実施することで、相乗効果を期待"
