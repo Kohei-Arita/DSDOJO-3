@@ -1,0 +1,84 @@
+experiment_id: exp0033
+experiment_name: "ゼロ閾値最適化版MoE（予測分布補正）"
+base_experiment: exp0031
+creation_date: "2025-10-05"
+status: ready_to_run
+
+objective:
+  primary: "MoE予測にゼロ閾値最適化を適用し、予測分布を実データに近づける"
+  secondary:
+    - "微小な予測値（0.02〜0.08）を0に補正してwRMSEを改善"
+    - "真のゼロ率と予測ゼロ率の一致を図る"
+
+baseline_scores:
+  exp0031_moe_oof: 0.2271
+  exp0031_moe_gate_auc: 0.921
+
+target_scores:
+  moe_oof_wrmse: 0.225
+  expected_improvement: -0.002
+
+methodology:
+  approach: "ゼロ閾値最適化による予測分布補正"
+  techniques:
+    - "真のゼロ率の確認"
+    - "閾値候補（0.0〜0.10）でwRMSE最小化"
+    - "最適閾値以下を0に補正"
+    - "OOF/Test両方に適用"
+
+  implementation_steps:
+    - step: "Step 5.5"
+      description: "ゼロ閾値最適化セルを追加"
+      details:
+        - "訓練データの真のゼロ率を確認"
+        - "MoE予測の低値域分布を分析"
+        - "閾値候補でwRMSEを最小化"
+        - "最適閾値で予測を補正"
+
+    - step: "Step 6"
+      description: "メトリクス保存"
+      details:
+        - "補正後のOOF wRMSEを記録"
+        - "Fold別スコアを保存"
+        - "最適ゼロ閾値を記録"
+
+    - step: "Step 7"
+      description: "提出ファイル生成"
+      details:
+        - "補正後のテスト予測で提出ファイル作成"
+
+expected_outcomes:
+  - "予測分布が実データに近づく"
+  - "微小値除去によりwRMSE改善"
+  - "ゼロ率の一致により分布整合性向上"
+
+validation_points:
+  - "最適ゼロ閾値が妥当な範囲（0.02〜0.08）か"
+  - "補正後のwRMSEが改善しているか"
+  - "補正後のゼロ率が真のゼロ率に近づいているか"
+
+artifacts:
+  notebook: "training_with_zero_threshold.ipynb"
+  metrics: "logs/host_moe_zero_threshold_001_metrics.json"
+  oof_predictions: "artifacts/oof_predictions_moe_zero_threshold.csv"
+  submission: "submissions/host_moe_zero_threshold_001_submission.csv"
+
+next_steps:
+  - id: exp0034
+    description: "High専門家のOptuna最適化"
+    rationale: "ゼロ閾値最適化の効果確認後、High専門家の性能向上"
+
+  - id: future
+    description: "3専門家MoE（Low/Mid/High）"
+    rationale: "両専門家の改善後、階層的分離を試行"
+
+tags:
+  - MoE
+  - Zero-Threshold
+  - Distribution-Correction
+  - Post-Processing
+  - wRMSE-Optimization
+
+references:
+  - "exp0031: 木モデル版MoE（ベースライン）"
+  - "exp0032: 対数変換版（悪化事例）"
