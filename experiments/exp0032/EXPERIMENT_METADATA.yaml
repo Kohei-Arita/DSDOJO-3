@@ -1,0 +1,72 @@
+experiment:
+  id: exp0032
+  name: "High Expert Optimization MoE"
+  date_created: "2025-10-05"
+  status: "ready"  # draft, ready, running, completed, archived
+
+baseline:
+  experiment_id: exp0031
+  baseline_score: 0.2271
+  baseline_description: "Tree-based MoE with Low/High experts"
+
+objective:
+  primary_goal: "Improve High expert performance through log transformation and regularization"
+  target_improvement: -0.002
+  target_metric: "OOF wRMSE"
+
+methodology:
+  - name: "Log transformation for High expert"
+    description: "Apply log1p to High region targets (y >= 0.1) to compress long-tailed distribution"
+    expected_effect: "Stabilize learning, reduce outlier impact"
+
+  - name: "Regularization strengthening"
+    description: "Increase min_child_samples to 50, add L1/L2 regularization"
+    expected_effect: "Prevent overfitting in low-sample High region"
+
+hyperparameters:
+  high_expert:
+    min_child_samples: 50  # increased from 30
+    reg_alpha: 0.1  # L1 regularization
+    reg_lambda: 1.0  # L2 regularization
+    learning_rate: 0.05
+    num_leaves: 31
+
+  low_expert:
+    # Same as exp0031
+    min_child_samples: 30
+    learning_rate: 0.05
+    num_leaves: 31
+
+expected_results:
+  high_expert_wrmse:
+    baseline: 0.392
+    target: 0.25
+    improvement: -0.142
+
+  moe_overall_oof:
+    baseline: 0.2271
+    target: 0.225
+    improvement: -0.002
+
+artifacts:
+  metrics: "logs/host_moe_high_opt_003_metrics.json"
+  oof_predictions: "artifacts/oof_predictions_moe_high_opt.csv"
+  submission: "submissions/host_moe_high_opt_003_submission.csv"
+  notebook: "training_with_nnls.ipynb"
+
+notes:
+  - "Cell execution order is critical: Cell 74 (Isotonic) before Cell 72 (Step 6)"
+  - "High expert uses log1p/expm1 transformation for training/prediction"
+  - "Regularization params tuned for ~8500 High region samples (30% of data)"
+
+next_steps:
+  - "Add Optuna optimization for High expert hyperparameters"
+  - "Consider 3-expert MoE (Low/Mid/High) if improvement confirmed"
+  - "Test CatBoost High expert for ensemble diversity"
+
+tags:
+  - MoE
+  - Expert-Optimization
+  - Log-Transform
+  - Regularization
+  - High-Expert

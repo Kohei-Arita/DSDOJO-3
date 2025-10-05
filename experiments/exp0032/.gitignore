@@ -1,0 +1,69 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+
+# Environment
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs (keep directory but ignore contents except .gitkeep)
+logs/*
+!logs/.gitkeep
+
+# Artifacts (keep directory but ignore large files)
+artifacts/*.parquet
+artifacts/*.csv
+artifacts/*.pkl
+!artifacts/.gitkeep
+
+# Model files (usually too large for git)
+model/
+*.lgb
+*.pkl
+*.joblib
+
+# Submissions (keep directory)
+submissions/*
+!submissions/.gitkeep
+
+# Temporary files
+*.tmp
+*.bak
