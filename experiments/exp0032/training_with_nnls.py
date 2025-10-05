@@ -4145,6 +4145,84 @@ print(f"  Min: {moe_oof_preds.min():.4f}")
 print(f"  Max: {moe_oof_preds.max():.4f}")
 
 # %% trusted=true
+# [exp0028] Isotonic校正: 正領域（y >= 0.1）のみを校正
+print("=" * 80)
+print("Isotonic校正を適用中...")
+print("=" * 80)
+
+from scripts.calibration import fit_isotonic_positive, apply_isotonic_positive
+
+# OOF予測で校正モデルを学習
+print("\n1. OOF予測でIsotonicモデルを学習中...")
+iso_model = fit_isotonic_positive(
+    y_true=y_train.values,
+    y_pred=blended_oof_preds,  # ブレンド後のOOF予測
+    threshold=0.1,
+    pos_weight=5.0
+)
+
+# OOF予測を校正して評価
+print("\n2. OOF予測を校正中...")
+calibrated_oof_preds = apply_isotonic_positive(
+    y_pred=blended_oof_preds,
+    iso_model=iso_model,
+    threshold=0.1
+)
+
+# 校正前後のスコア比較
+before_rmse = weighted_rmse(y_train.values, blended_oof_preds)
+after_rmse = weighted_rmse(y_train.values, calibrated_oof_preds)
+
+print(f"\n【校正効果】")
+print(f"  校正前 wRMSE: {before_rmse:.6f}")
+print(f"  校正後 wRMSE: {after_rmse:.6f}")
+print(f"  改善量: {before_rmse - after_rmse:.6f} ({(before_rmse - after_rmse) / before_rmse * 100:.2f}%)")
+
+# 正領域・負領域別の分析
+from sklearn.metrics import mean_squared_error
+
+pos_mask = y_train.values >= 0.1
+neg_mask = y_train.values < 0.1
+
+print(f"\n【正領域（y >= 0.1）】")
+print(f"  サンプル数: {pos_mask.sum()}")
+print(f"  校正前 RMSE: {np.sqrt(mean_squared_error(y_train[pos_mask], blended_oof_preds[pos_mask])):.6f}")
+print(f"  校正後 RMSE: {np.sqrt(mean_squared_error(y_train[pos_mask], calibrated_oof_preds[pos_mask])):.6f}")
+
+print(f"\n【負領域（y < 0.1）】")
+print(f"  サンプル数: {neg_mask.sum()}")
+print(f"  校正前 RMSE: {np.sqrt(mean_squared_error(y_train[neg_mask], blended_oof_preds[neg_mask])):.6f}")
+print(f"  校正後 RMSE: {np.sqrt(mean_squared_error(y_train[neg_mask], calibrated_oof_preds[neg_mask])):.6f}")
+
+# 3. テストデータに適用
+print("\n3. テストデータに校正を適用中...")
+calibrated_test_preds = apply_isotonic_positive(
+    y_pred=blended_test_preds,
+    iso_model=iso_model,
+    threshold=0.1
+)
+
+print(f"\n【テスト予測の統計】")
+print(f"  校正前:")
+print(f"    Mean: {blended_test_preds.mean():.6f}")
+print(f"    Std:  {blended_test_preds.std():.6f}")
+print(f"    Min:  {blended_test_preds.min():.6f}")
+print(f"    Max:  {blended_test_preds.max():.6f}")
+print(f"  校正後:")
+print(f"    Mean: {calibrated_test_preds.mean():.6f}")
+print(f"    Std:  {calibrated_test_preds.std():.6f}")
+print(f"    Min:  {calibrated_test_preds.min():.6f}")
+print(f"    Max:  {calibrated_test_preds.max():.6f}")
+
+# 4. ブレンド予測を校正版に置き換え
+blended_test_preds = calibrated_test_preds
+blended_oof_preds = calibrated_oof_preds
+
+print("\n✅ Isotonic校正完了")
+
+
+
+# %% trusted=true
 # [exp0031] Step 6: ベースラインとの比較・メトリクス保存
 print("\n" + "=" * 80)
 print("Step 6: ベースラインとの比較・メトリクス保存")
@@ -4300,84 +4378,6 @@ print(f"  OOF wRMSE: {final_moe_score:.6f}")
 print(f"  Metrics: {metrics_file}")
 print(f"  Submission: {submission_file}")
 print(f"{'='*80}")
-
-
-# %% trusted=true
-# [exp0028] Isotonic校正: 正領域（y >= 0.1）のみを校正
-print("=" * 80)
-print("Isotonic校正を適用中...")
-print("=" * 80)
-
-from scripts.calibration import fit_isotonic_positive, apply_isotonic_positive
-
-# OOF予測で校正モデルを学習
-print("\n1. OOF予測でIsotonicモデルを学習中...")
-iso_model = fit_isotonic_positive(
-    y_true=y_train.values,
-    y_pred=blended_oof_preds,  # ブレンド後のOOF予測
-    threshold=0.1,
-    pos_weight=5.0
-)
-
-# OOF予測を校正して評価
-print("\n2. OOF予測を校正中...")
-calibrated_oof_preds = apply_isotonic_positive(
-    y_pred=blended_oof_preds,
-    iso_model=iso_model,
-    threshold=0.1
-)
-
-# 校正前後のスコア比較
-before_rmse = weighted_rmse(y_train.values, blended_oof_preds)
-after_rmse = weighted_rmse(y_train.values, calibrated_oof_preds)
-
-print(f"\n【校正効果】")
-print(f"  校正前 wRMSE: {before_rmse:.6f}")
-print(f"  校正後 wRMSE: {after_rmse:.6f}")
-print(f"  改善量: {before_rmse - after_rmse:.6f} ({(before_rmse - after_rmse) / before_rmse * 100:.2f}%)")
-
-# 正領域・負領域別の分析
-from sklearn.metrics import mean_squared_error
-
-pos_mask = y_train.values >= 0.1
-neg_mask = y_train.values < 0.1
-
-print(f"\n【正領域（y >= 0.1）】")
-print(f"  サンプル数: {pos_mask.sum()}")
-print(f"  校正前 RMSE: {np.sqrt(mean_squared_error(y_train[pos_mask], blended_oof_preds[pos_mask])):.6f}")
-print(f"  校正後 RMSE: {np.sqrt(mean_squared_error(y_train[pos_mask], calibrated_oof_preds[pos_mask])):.6f}")
-
-print(f"\n【負領域（y < 0.1）】")
-print(f"  サンプル数: {neg_mask.sum()}")
-print(f"  校正前 RMSE: {np.sqrt(mean_squared_error(y_train[neg_mask], blended_oof_preds[neg_mask])):.6f}")
-print(f"  校正後 RMSE: {np.sqrt(mean_squared_error(y_train[neg_mask], calibrated_oof_preds[neg_mask])):.6f}")
-
-# 3. テストデータに適用
-print("\n3. テストデータに校正を適用中...")
-calibrated_test_preds = apply_isotonic_positive(
-    y_pred=blended_test_preds,
-    iso_model=iso_model,
-    threshold=0.1
-)
-
-print(f"\n【テスト予測の統計】")
-print(f"  校正前:")
-print(f"    Mean: {blended_test_preds.mean():.6f}")
-print(f"    Std:  {blended_test_preds.std():.6f}")
-print(f"    Min:  {blended_test_preds.min():.6f}")
-print(f"    Max:  {blended_test_preds.max():.6f}")
-print(f"  校正後:")
-print(f"    Mean: {calibrated_test_preds.mean():.6f}")
-print(f"    Std:  {calibrated_test_preds.std():.6f}")
-print(f"    Min:  {calibrated_test_preds.min():.6f}")
-print(f"    Max:  {calibrated_test_preds.max():.6f}")
-
-# 4. ブレンド予測を校正版に置き換え
-blended_test_preds = calibrated_test_preds
-blended_oof_preds = calibrated_oof_preds
-
-print("\n✅ Isotonic校正完了")
-
 
 
 # %% [markdown] id="Sap_9i9DaIf3"
