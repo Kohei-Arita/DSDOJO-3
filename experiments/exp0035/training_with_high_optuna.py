@@ -4797,67 +4797,7 @@ print(f"{'='*80}")
 
 
 # %% trusted=true
-# [exp0034] Step 7: 提出ファイル作成
-
-print("\n" + "=" * 80)
-print("Step 7: 提出ファイル作成")
-print("=" * 80)
-
-# テスト予測の統計
-print(f"\nMoEテスト予測統計:")
-print(f"  Mean: {moe_test_preds.mean():.4f}")
-print(f"  Std: {moe_test_preds.std():.4f}")
-print(f"  Min: {moe_test_preds.min():.4f}")
-print(f"  Max: {moe_test_preds.max():.4f}")
-
-# 提出ファイルの作成
-submission_dir = Path("submissions")
-submission_dir.mkdir(exist_ok=True)
-
-moe_submission = pd.DataFrame({
-    "match_id": test_df["match_id"],
-    "player_id": test_df["player_id"],
-    "xAG": moe_test_preds
-})
-
-submission_file = submission_dir / "host_moe_high_optuna_001_submissions.csv"
-moe_submission.to_csv(submission_file, index=False)
-print(f"\n✅ 提出ファイルを保存: {submission_file}")
-
-# 予測分布の可視化
-fig, axes = plt.subplots(1, 3, figsize=(18, 5))
-
-# OOF予測
-axes[0].hist(moe_oof_preds, bins=50, alpha=0.7, color='purple', edgecolor='black')
-axes[0].set_title(f'MoE OOF予測分布\n(wRMSE: {final_moe_score:.6f})', fontsize=14)
-axes[0].set_xlabel('xAG予測値')
-axes[0].set_ylabel('頻度')
-axes[0].grid(alpha=0.3)
-
-# テスト予測
-axes[1].hist(moe_test_preds, bins=50, alpha=0.7, color='orange', edgecolor='black')
-axes[1].set_title('MoEテスト予測分布', fontsize=14)
-axes[1].set_xlabel('xAG予測値')
-axes[1].set_ylabel('頻度')
-axes[1].grid(alpha=0.3)
-
-# ゲート確率の分布
-axes[2].hist(gate_oof_cal, bins=50, alpha=0.7, color='blue', edgecolor='black')
-axes[2].set_title(f'ゲート確率分布（校正済み）\n(AUC: {overall_auc:.4f})', fontsize=14)
-axes[2].set_xlabel('P(y >= 0.1)')
-axes[2].set_ylabel('頻度')
-axes[2].grid(alpha=0.3)
-
-plt.tight_layout()
-plt.show()
-
-print(f"\n{'='*80}")
-print(f"exp0034 完了！")
-print(f"  Method: {blend_method}")
-print(f"  OOF wRMSE: {final_moe_score:.6f}")
-print(f"  Metrics: {metrics_file}")
-print(f"  Submission: {submission_file}")
-print(f"{'='*80}")
+# [exp0034] Step 7: 提出ファイル作成print("\n" + "=" * 80)print("Step 7: 提出ファイル作成")print("=" * 80)# テスト予測の統計print(f"\nMoEテスト予測統計:")print(f"  Mean: {moe_test_preds.mean():.4f}")print(f"  Std: {moe_test_preds.std():.4f}")print(f"  Min: {moe_test_preds.min():.4f}")print(f"  Max: {moe_test_preds.max():.4f}")# 丸め処理関数（0.1刻みの基準値±0.02範囲を基準値に丸める）def round_predictions(value):    """    0.1刻みの基準値から±0.02の範囲内なら基準値に丸める    例: 0.08-0.12 → 0.1, 0.18-0.22 → 0.2    """    nearest_decimal = round(value, 1)  # 最も近い0.1刻みの値    if abs(value - nearest_decimal) <= 0.02:        return nearest_decimal    return value# 提出ファイルの作成submission_dir = Path("submissions")submission_dir.mkdir(exist_ok=True)# 丸め処理を適用moe_test_preds_rounded = np.array([round_predictions(v) for v in moe_test_preds])# 丸め前後の統計比較print(f"\n丸め処理前後の統計:")print(f"  丸め前 - Mean: {moe_test_preds.mean():.4f}, Std: {moe_test_preds.std():.4f}")print(f"  丸め後 - Mean: {moe_test_preds_rounded.mean():.4f}, Std: {moe_test_preds_rounded.std():.4f}")print(f"  変更された予測値の数: {np.sum(moe_test_preds != moe_test_preds_rounded)}/{len(moe_test_preds)}")moe_submission = pd.DataFrame({    "match_id": test_df["match_id"],    "player_id": test_df["player_id"],    "xAG": moe_test_preds_rounded  # 丸め処理後の予測値を使用})submission_file = submission_dir / "host_moe_high_optuna_001_submissions.csv"moe_submission.to_csv(submission_file, index=False)print(f"\n✅ 提出ファイルを保存: {submission_file}")
 
 
 # %% [markdown] id="Sap_9i9DaIf3"
@@ -4965,6 +4905,86 @@ print(f"  3. submission_catboost_only.csv")
 
 
 # %% trusted=true
+# 丸め処理関数
+def round_predictions(value):
+  nearest_decimal = round(value, 1)
+  if abs(value - nearest_decimal) <= 0.02:
+      return nearest_decimal
+  return value
+
+# 丸め処理を適用
+blended_test_preds_rounded = np.array([round_predictions(v) for v in
+blended_test_preds])
+lgbm_test_preds_rounded = np.array([round_predictions(v) for v in lgbm_test_preds])
+catboost_test_preds_rounded = np.array([round_predictions(v) for v in
+catboost_test_preds])
+
+# 統計比較
+print("\n" + "="*80)
+print("丸め処理前後の統計比較")
+print("="*80)
+
+print("\nブレンドモデル")
+print("  丸め前 - Mean:", blended_test_preds.mean(), "Std:",
+blended_test_preds.std())
+print("  丸め後 - Mean:", blended_test_preds_rounded.mean(), "Std:",
+blended_test_preds_rounded.std())
+print("  変更数:", np.sum(blended_test_preds != blended_test_preds_rounded), "/",
+len(blended_test_preds))
+
+print("\nLightGBM")
+print("  丸め前 - Mean:", lgbm_test_preds.mean(), "Std:", lgbm_test_preds.std())
+print("  丸め後 - Mean:", lgbm_test_preds_rounded.mean(), "Std:",
+lgbm_test_preds_rounded.std())
+print("  変更数:", np.sum(lgbm_test_preds != lgbm_test_preds_rounded), "/",
+len(lgbm_test_preds))
+
+print("\nCatBoost")
+print("  丸め前 - Mean:", catboost_test_preds.mean(), "Std:",
+catboost_test_preds.std())
+print("  丸め後 - Mean:", catboost_test_preds_rounded.mean(), "Std:",
+catboost_test_preds_rounded.std())
+print("  変更数:", np.sum(catboost_test_preds != catboost_test_preds_rounded), "/",
+len(catboost_test_preds))
+
+# ブレンドモデルの予測で提出ファイルを作成（丸め処理後）
+submission_df['xAG'] = blended_test_preds_rounded
+
+# 提出ファイル保存
+submission_path = log_dir / 'submission_blend_lgbm_catboost.csv'
+submission_df.to_csv(submission_path, index=False)
+
+print("\n提出ファイルを保存しました:", submission_path)
+print("\n提出ファイルの統計:")
+print(submission_df['xAG'].describe())
+
+# 個別モデルの提出ファイルも保存（丸め処理後）
+submission_lgbm = submission_df.copy()
+submission_lgbm['xAG'] = lgbm_test_preds_rounded
+submission_lgbm.to_csv(log_dir / 'submission_lgbm_only.csv', index=False)
+print("\nLightGBM単独の提出ファイルも保存:", log_dir / 'submission_lgbm_only.csv')
+
+submission_catboost = submission_df.copy()
+submission_catboost['xAG'] = catboost_test_preds_rounded
+submission_catboost.to_csv(log_dir / 'submission_catboost_only.csv', index=False)
+print("CatBoost単独の提出ファイルも保存:", log_dir / 'submission_catboost_only.csv')
+
+# サマリー表示
+print("\n=== 最終結果サマリー ===")
+print("LightGBM OOF RMSE:", oof_score)
+print("CatBoost OOF RMSE:", catboost_oof_score)
+print("ブレンドOOF RMSE:", best_blend_score)
+print("\nNNLSスタッキング係数:")
+for name, coef in zip(feature_names, nnls_coefs):
+  print(f"  {name:15s}: {coef:.6f}")
+print("\n比較: グリッドサーチの最適比率:")
+print("  LightGBM:", best_lgbm_weight)
+print("  CatBoost:", best_catboost_weight)
+print("\n提出ファイル (すべて丸め処理適用済み):")
+print("  1. submission_blend_lgbm_catboost.csv (NNLS推奨)")
+print("  2. submission_lgbm_only.csv")
+print("  3. submission_catboost_only.csv")
+
 
 # %% trusted=true
 
